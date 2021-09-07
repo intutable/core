@@ -1,0 +1,23 @@
+{
+  "name": "core",
+  "version": "0.1.0",
+  "description": "The core for the opentable project",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitlab.com/pvs-hd/ot/core.git"
+  },
+  "author": "pvs",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://gitlab.com/pvs-hd/ot/core/issues"
+  },
+  "homepage": "https://gitlab.com/pvs-hd/ot/core#readme",
+  "dependencies": {
+    "typescript": "^4.4.2"
+  }
+}
