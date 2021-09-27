@@ -1,0 +1,23 @@
+image: node:latest
+
+stages:
+    - test
+    - build
+
+before_script:
+    - npm install
+
+test:
+    stage: test
+    script:
+        - npm run test:full
+    coverage: /All files[^|]*\|[^|]*\s+([\d\.]+)/
+
+build:
+    stage: build
+    script:
+        - npm run build
+        - npm publish
+    rules:
+        - if: '$CI_COMMIT_REF_NAME == "main"'
+        - when: manual

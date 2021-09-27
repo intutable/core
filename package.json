@@ -1,23 +1,43 @@
 {
-  "name": "core",
-  "version": "0.1.0",
-  "description": "The core for the opentable project",
-  "main": "dist/index.js",
-  "scripts": {
-    "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://gitlab.com/pvs-hd/ot/core.git"
-  },
-  "author": "pvs",
-  "license": "Apache-2.0",
-  "bugs": {
-    "url": "https://gitlab.com/pvs-hd/ot/core/issues"
-  },
-  "homepage": "https://gitlab.com/pvs-hd/ot/core#readme",
-  "dependencies": {
-    "typescript": "^4.4.2"
-  }
+    "name": "@intutable/core",
+    "version": "0.1.0",
+    "description": "The core for the intutable project",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc",
+        "test": "jest --coverage tests",
+        "test:full": "npm test",
+        "format": "prettier --write ."
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://gitlab.com/intutable/core/"
+    },
+    "author": "Parallel and Distributed Systems Group Universität Heidelberg",
+    "license": "Apache-2.0",
+    "bugs": {
+        "url": "https://gitlab.com/intutable/core/issues"
+    },
+    "homepage": "https://gitlab.com/intutable/core#readme",
+    "files": [
+        "package.json",
+        "LICENSE",
+        "dist/*"
+    ],
+    "devDependencies": {
+        "@babel/preset-typescript": "^7.15.0",
+        "@types/jest": "^27.0.1",
+        "@types/node": "^16.7.13",
+        "jest": "^27.1.0",
+        "prettier": "2.3.2",
+        "ts-jest": "^27.0.5",
+        "typescript": "^4.4.2"
+    },
+    "dependencies": {
+        "@intutable/database": "^1.0.3"
+    },
+    "publishConfig": {
+        "@intutable:registry": "https://gitlab.com/api/v4/projects/29926955/packages/npm/"
+    }
 }
