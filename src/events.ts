@@ -12,12 +12,7 @@
                 Does a component listening for requests on a channel mean that notifications cannot be send 
 */
 
-import {
-    Middleware,
-    MiddlewareResponse,
-    MiddlewareResponseType,
-    MiddlewareLoader,
-} from "./middleware"
+import { Middleware, MiddlewareResponse, MiddlewareResponseType } from "./middleware"
 
 export type CoreRequest = object
 type CoreResponse = object | object[] | string
@@ -68,7 +63,7 @@ export class EventSystem {
             let response = await middleWare(channel, request)
 
             if (response.type !== MiddlewareResponseType.Pass) {
-                return new Promise((resolve, reject) => resolve(response))
+                return Promise.resolve(response)
             }
 
             if (response.payload) {
@@ -76,9 +71,7 @@ export class EventSystem {
             }
         }
 
-        return new Promise((resolve, reject) => {
-            resolve({ type: MiddlewareResponseType.Pass, payload: request })
-        })
+        return Promise.resolve({ type: MiddlewareResponseType.Pass, payload: request })
     }
 
     private async handleRequest(channel: string, request: CoreRequest): Promise<CoreResponse> {
@@ -97,15 +90,15 @@ export class EventSystem {
         let { type, payload } = await this.handleMiddleware(channel, request)
 
         if (type === MiddlewareResponseType.Resolve) {
-            return new Promise((resolve, reject) => resolve(payload))
+            return Promise.resolve(payload)
         } else if (type === MiddlewareResponseType.Reject) {
-            return new Promise((resolve, reject) => reject(payload))
+            return Promise.reject(payload)
         } else {
             return this.handleRequest(channel, payload)
         }
     }
 
-    public addMiddleware(loader: MiddlewareLoader) {
-        this.middlewares.push(loader(this))
+    public addMiddleware(middleware: Middleware) {
+        this.middlewares.push(middleware)
     }
 }

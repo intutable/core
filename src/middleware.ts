@@ -11,4 +11,3 @@ export interface MiddlewareResponse {
     payload: any
 }
 export type Middleware = (channel: string, request: CoreRequest) => Promise<MiddlewareResponse>
-export type MiddlewareLoader = (events: EventSystem) => Middleware
