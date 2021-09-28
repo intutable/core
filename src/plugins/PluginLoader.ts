@@ -1,5 +1,5 @@
 import { EventSystem } from "../events"
-import { MiddlewareLoader } from "../middleware"
+import { Middleware } from "../middleware"
 
 export class PluginLoader {
     events: EventSystem
@@ -77,7 +77,7 @@ export class PluginLoader {
         return this.events.request(channel, request)
     }
 
-    public addMiddleware(loader: MiddlewareLoader) {
-        return this.events.addMiddleware(loader)
+    public addMiddleware(middleware: Middleware) {
+        return this.events.addMiddleware(middleware)
     }
 }

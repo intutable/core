@@ -24,9 +24,8 @@ beforeEach(async () => {
     promiseCallback1 = jest.fn((request, resolve, reject) => resolve({}))
     promiseCallback2 = jest.fn((request, resolve, reject) => resolve({}))
 
-    middleWare = jest.fn(
-        (channel, request) =>
-            new Promise(resolve => resolve({ type: MiddlewareResponseType.Pass, payload: request }))
+    middleWare = jest.fn((channel, request) =>
+        Promise.resolve({ type: MiddlewareResponseType.Pass, payload: request })
     )
     rejectingMiddleWare = jest.fn((channel, request) => ({
         type: MiddlewareResponseType.Reject,
@@ -133,7 +132,7 @@ describe("requests and responds via the event bus", () => {
 describe("middleware", () => {
     test("middleware is subscribed to all channels", async () => {
         events.listenForRequest(channel, promiseCallback1)
-        events.addMiddleware((events: EventSystem) => middleWare)
+        events.addMiddleware(middleWare)
 
         await events.request(channel, {})
 
@@ -142,7 +141,7 @@ describe("middleware", () => {
     })
 
     test("middleware receives events on channels that are registered after itself", async () => {
-        events.addMiddleware((events: EventSystem) => middleWare)
+        events.addMiddleware(middleWare)
         events.listenForRequest(channel, promiseCallback1)
 
         await events.request(channel, {})
@@ -152,7 +151,7 @@ describe("middleware", () => {
     })
 
     test("middleware can reject requests and plugins don't recieve them", async () => {
-        events.addMiddleware((events: EventSystem) => rejectingMiddleWare)
+        events.addMiddleware(rejectingMiddleWare)
         events.listenForRequest(channel, promiseCallback1)
 
         await events.request(channel, {}).catch(() => {})
@@ -162,7 +161,7 @@ describe("middleware", () => {
     })
 
     test("middleware can resolve requests and plugins don't recieve them", async () => {
-        events.addMiddleware((events: EventSystem) => resolvingMiddleware)
+        events.addMiddleware(resolvingMiddleware)
         events.listenForRequest(channel, promiseCallback1)
 
         await events.request(channel, {}).catch(() => {})
