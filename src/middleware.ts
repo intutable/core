@@ -10,4 +10,4 @@ export interface MiddlewareResponse {
     type: MiddlewareResponseType
     payload: any
 }
-export type Middleware = (channel: string, request: CoreRequest) => Promise<MiddlewareResponse>
+export type Middleware = (request: CoreRequest) => Promise<MiddlewareResponse>

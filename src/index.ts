@@ -2,17 +2,7 @@ import path from "path"
 import { EventSystem } from "./events"
 import { loadPlugins, PluginHandle } from "./plugins"
 
-const DEFAULT_PLUGIN_PATH = path.join(__dirname, "../node_modules/@intutable")
-
-interface PluginPathArgs {
-    pluginPath?: string
-    additionalPluginPaths?: string[]
-}
-
-const DEFAULT_PLUGIN_PATH_ARGS = {
-    pluginPath: DEFAULT_PLUGIN_PATH,
-    additionalPluginPaths: [],
-}
+const DEFAULT_PLUGIN_PATH = path.join(__dirname, "../node_modules/@intutable/*")
 
 export class IntuTable {
     events: EventSystem
@@ -23,14 +13,14 @@ export class IntuTable {
         this.plugins = plugins
     }
 
-    public static async create(pluginPathArgs: PluginPathArgs): Promise<IntuTable> {
-        let events = new EventSystem()
-
-        let { pluginPath, additionalPluginPaths } = {
-            ...DEFAULT_PLUGIN_PATH_ARGS,
-            ...pluginPathArgs,
-        }
-        let plugins = await loadPlugins([pluginPath, ...additionalPluginPaths], events)
+    /**
+     * @param pluginPaths defaults to node_modules/@intutable
+     */
+    public static async create(
+        pluginPaths: string[] = [DEFAULT_PLUGIN_PATH],
+        events: EventSystem = new EventSystem()
+    ): Promise<IntuTable> {
+        let plugins = await loadPlugins(pluginPaths, events)
 
         return Promise.resolve(new this(events, plugins))
     }
