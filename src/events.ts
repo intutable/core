@@ -1,66 +1,76 @@
-/*
-    The event bus contains two different systems
-        1. Notifications:
-            A component can notify others. This is a one way communication and does not/ cannot need an answer
-        2. Request & Responses:
-            A component can listen for requests on a channel and returns a response over the same
-
-            Listening for requests is exclusive per channel. Only one component can do it at a time
-
-        For consideration:
-            - are 1 and 2 exclusive per channel? 
-                Does a component listening for requests on a channel mean that notifications cannot be send 
-*/
-
 import { Middleware, MiddlewareResponse, MiddlewareResponseType } from "./middleware"
 
-export type CoreRequest = object
-type CoreResponse = object | object[] | string
+export interface CoreRequest {
+    channel: string
+    method: string
+    [index: string]: any
+}
+export type CoreResponse = object
+export type CoreNotification = object
 
-type RequestHandler = (request: CoreRequest, resolve: Function, reject: Function) => void
+export type RequestHandler = (request: CoreRequest) => Promise<CoreResponse>
+export type NotificationHandler = (notification: CoreNotification) => void
 
 export class EventSystem {
-    private notificationListener: { [index: string]: Function[] }
-    private requestListener: { [index: string]: RequestHandler }
+    private notificationHandlers: { [index: string]: NotificationHandler[] }
+    private requestHandlers: { [index: string]: { [index: string]: RequestHandler } }
     private middlewares: Middleware[]
 
     constructor() {
-        this.notificationListener = {}
-        this.requestListener = {}
+        this.notificationHandlers = {}
+        this.requestHandlers = {}
         this.middlewares = []
     }
 
-    public listenForNotification(channel: string, callback: Function) {
-        if (this.notificationListener[channel]) {
-            this.notificationListener[channel].push(callback)
+    public listenForNotification(channel: string, callback: NotificationHandler) {
+        if (this.notificationHandlers[channel]) {
+            this.notificationHandlers[channel].push(callback)
         } else {
-            this.notificationListener[channel] = [callback]
+            this.notificationHandlers[channel] = [callback]
         }
     }
 
-    public notify(channel: string, message: object) {
-        if (this.notificationListener[channel]) {
-            for (let subscriber of this.notificationListener[channel]) {
-                subscriber()
+    public listenForRequest(channel: string, method: string, handler: RequestHandler) {
+        if (!this.requestHandlers[channel]) {
+            this.requestHandlers[channel] = {}
+        }
+
+        if (this.requestHandlers[channel][method]) {
+            this.notify("core", {
+                message: `overwriting request handler for method ${method} in channel ${channel}`,
+            })
+        }
+
+        this.requestHandlers[channel][method] = handler
+    }
+
+    public addMiddleware(middleware: Middleware) {
+        this.middlewares.push(middleware)
+    }
+
+    public async request(request: CoreRequest): Promise<CoreResponse> {
+        let { type, payload } = await this.handleMiddleware(request)
+
+        if (type === MiddlewareResponseType.Resolve) {
+            return Promise.resolve(payload)
+        } else if (type === MiddlewareResponseType.Reject) {
+            return Promise.reject(payload)
+        } else {
+            return this.handleRequest(payload)
+        }
+    }
+
+    public notify(channel: string, message: CoreNotification) {
+        if (this.notificationHandlers[channel]) {
+            for (let subscriber of this.notificationHandlers[channel]) {
+                subscriber(message)
             }
         }
     }
 
-    public listenForRequest(channel: string, callback: RequestHandler): boolean {
-        if (this.requestListener[channel]) {
-            return false
-        }
-
-        this.requestListener[channel] = callback
-        return true
-    }
-
-    private async handleMiddleware(
-        channel: string,
-        request: CoreRequest
-    ): Promise<MiddlewareResponse> {
+    private async handleMiddleware(request: CoreRequest): Promise<MiddlewareResponse> {
         for (let middleWare of this.middlewares) {
-            let response = await middleWare(channel, request)
+            let response = await middleWare(request)
 
             if (response.type !== MiddlewareResponseType.Pass) {
                 return Promise.resolve(response)
@@ -74,31 +84,19 @@ export class EventSystem {
         return Promise.resolve({ type: MiddlewareResponseType.Pass, payload: request })
     }
 
-    private async handleRequest(channel: string, request: CoreRequest): Promise<CoreResponse> {
-        return new Promise((resolve, reject) => {
-            const handler = this.requestListener[channel]
-
-            if (!handler) {
-                return Promise.reject({ message: `no handler found for ${channel}` })
-            }
-
-            handler(request, resolve, reject)
-        })
-    }
-
-    public async request(channel: string, request: CoreRequest): Promise<CoreResponse> {
-        let { type, payload } = await this.handleMiddleware(channel, request)
-
-        if (type === MiddlewareResponseType.Resolve) {
-            return Promise.resolve(payload)
-        } else if (type === MiddlewareResponseType.Reject) {
-            return Promise.reject(payload)
-        } else {
-            return this.handleRequest(channel, payload)
+    private async handleRequest({
+        channel,
+        method,
+        ...request
+    }: CoreRequest): Promise<CoreResponse> {
+        if (!this.requestHandlers[channel]) {
+            return Promise.reject({ message: `no such channel ${channel}` })
         }
-    }
 
-    public addMiddleware(middleware: Middleware) {
-        this.middlewares.push(middleware)
+        if (!this.requestHandlers[channel][method]) {
+            return Promise.reject({ message: `no such method ${method}` })
+        }
+
+        return this.requestHandlers[channel][method]({ channel, method, ...request })
     }
 }

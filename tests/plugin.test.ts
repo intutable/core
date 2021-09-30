@@ -1,18 +1,18 @@
-import { EventSystem } from "../src/events"
+import { EventSystem, CoreNotification } from "../src/events"
 import { PluginHandle, loadPlugins, Plugin } from "../src/plugins"
 
 import path from "path"
 
-const PLUGIN_PATH = path.join(__dirname, "assets/validPlugins")
-const INVALID_PLUGIN_PATH = path.join(__dirname, "assets/invalidPlugins")
+const PLUGIN_PATH = "tests/assets/validPlugins/*"
+const INVALID_PLUGIN_PATH = "tests/assets/invalidPlugins/*"
 
-let eventBus = new EventSystem()
+let events = new EventSystem()
 
 describe("loading of plugins", () => {
     test("plugins are loaded from a folder", async () => {
-        let pluginHandler: PluginHandle = await loadPlugins(PLUGIN_PATH, eventBus)
+        let pluginHandle: PluginHandle = await loadPlugins([PLUGIN_PATH], events)
 
-        expect(pluginHandler.plugins.map(p => p.info.name)).toEqual(["firstPlugin", "secondPlugin"])
+        expect(pluginHandle.plugins.map(p => p.info.name)).toEqual(["firstPlugin", "secondPlugin"])
     })
 
     test("invalid folders are not loaded", async () => {
@@ -23,24 +23,35 @@ describe("loading of plugins", () => {
          * dont have an init function in the entrypoint of the module
          */
 
-        let pluginHandle: PluginHandle = await loadPlugins(INVALID_PLUGIN_PATH, eventBus)
+        let pluginHandle: PluginHandle = await loadPlugins([INVALID_PLUGIN_PATH], events)
 
         expect(pluginHandle.plugins).toHaveLength(0)
     })
 
     test("discovered plugins are loaded as node modules", async () => {
-        let pluginHandle: PluginHandle = await loadPlugins(PLUGIN_PATH, eventBus)
+        let pluginHandle: PluginHandle = await loadPlugins([PLUGIN_PATH], events)
 
         let firstPlugin = pluginHandle.plugins[0]
 
-        expect(firstPlugin.module).toEqual(require(`${PLUGIN_PATH}/firstPlugin`))
+        expect(firstPlugin.module).toEqual(
+            require(path.join(__dirname, "assets/validPlugins/firstPlugin"))
+        )
+    })
+
+    test("plugins can be loaded from multiple folders", async () => {
+        let pluginHandle: PluginHandle = await loadPlugins(
+            [PLUGIN_PATH, INVALID_PLUGIN_PATH],
+            events
+        )
+
+        expect(pluginHandle.plugins.map(p => p.info.name)).toEqual(["firstPlugin", "secondPlugin"])
     })
 })
 
 describe("communication of plugins", () => {
     test("plugins can answer requests on the event bus ", async () => {
-        await loadPlugins(PLUGIN_PATH, eventBus)
-        const response = await eventBus.request("firstPlugin", { method: "greeting" })
+        await loadPlugins([PLUGIN_PATH], events)
+        const response = await events.request({ channel: "firstPlugin", method: "greeting" })
 
         expect(response).toEqual({ message: "Hello from the first plugin" })
     })

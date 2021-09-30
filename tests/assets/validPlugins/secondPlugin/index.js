@@ -1,7 +1,7 @@
 module.exports = {
     init: function (plugin) {
-        plugin.listenForRequest("secondPlugin").on("greeting", (request, resolve, reject) => {
-            resolve({ message: "Hello from the second plugin" })
+        plugin.listenForRequest("secondPlugin").on("greeting", request => {
+            return Promise.resolve({ message: "Hello from the second plugin" })
         })
     },
 }

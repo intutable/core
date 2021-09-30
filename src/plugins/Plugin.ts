@@ -3,10 +3,12 @@ export interface PluginModule {
     close?: Function
 }
 
+export interface PluginInfo {
+    name: string
+}
+
 export interface Plugin {
     module: PluginModule
-    info: {
-        name: string
-    }
+    info: PluginInfo
     path: string
 }
