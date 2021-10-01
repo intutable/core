@@ -13,10 +13,10 @@ export class PluginLoader {
     constructor(events: EventSystem) {
         this.events = events
 
-        this.listenForNotification = events.listenForNotification
-        this.addMiddleware = events.addMiddleware
-        this.notify = events.notify
-        this.request = events.request
+        this.listenForNotification = events.listenForNotification.bind(events)
+        this.addMiddleware = events.addMiddleware.bind(events)
+        this.notify = events.notify.bind(events)
+        this.request = events.request.bind(events)
     }
 
     public listenForRequest(channel: string) {
