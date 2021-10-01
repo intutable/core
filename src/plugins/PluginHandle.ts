@@ -7,10 +7,10 @@ export class PluginHandle {
         this._plugins = plugins
     }
 
-    public closeAll() {
+    public async closeAll() {
         for (let plugin of this._plugins) {
             if (plugin.module.close) {
-                plugin.module.close()
+                await plugin.module.close()
             }
         }
     }
