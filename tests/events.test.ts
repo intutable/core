@@ -51,14 +51,14 @@ describe("notification events", () => {
         events.listenForNotifications(channel, notificationHandler1)
         events.notify(notification)
 
-        expect(notificationHandler1.mock.calls.length).toBe(1)
+        expect(notificationHandler1).toHaveBeenCalled()
         expect(notificationHandler1.mock.calls[0]).toEqual([notification])
     })
 
     test("the event handler is only called when the event is triggered", () => {
         events.listenForNotifications(channel, notificationHandler1)
 
-        expect(notificationHandler1.mock.calls.length).toBe(0)
+        expect(notificationHandler1).not.toHaveBeenCalled()
     })
 
     test("subscribers are notified about mutliple events", () => {
@@ -76,8 +76,8 @@ describe("notification events", () => {
 
         events.notify(notification)
 
-        expect(notificationHandler1.mock.calls.length).toBe(1)
-        expect(notificationHandler2.mock.calls.length).toBe(1)
+        expect(notificationHandler1).toHaveBeenCalled()
+        expect(notificationHandler2).toHaveBeenCalled()
     })
 
     test("multiple components can listen to different channels", () => {
@@ -87,8 +87,8 @@ describe("notification events", () => {
         events.notify(notification)
         events.notify({ channel: otherChannel })
 
-        expect(notificationHandler1.mock.calls.length).toBe(1)
-        expect(notificationHandler2.mock.calls.length).toBe(1)
+        expect(notificationHandler1).toHaveBeenCalled()
+        expect(notificationHandler2).toHaveBeenCalled()
     })
 })
 
@@ -98,7 +98,7 @@ describe("requests and responds via the event bus", () => {
 
         await events.request(request)
 
-        expect(requestHandler1.mock.calls.length).toBe(1)
+        expect(requestHandler1).toHaveBeenCalled()
     })
 
     test("requests are answered by responses", async () => {
@@ -148,8 +148,8 @@ describe("middleware", () => {
 
         await events.request(request)
 
-        expect(requestHandler1.mock.calls.length).toBe(1)
-        expect(middleware.mock.calls.length).toBe(1)
+        expect(requestHandler1).toHaveBeenCalled()
+        expect(middleware).toHaveBeenCalled()
     })
 
     test("middleware receives events on channels that are registered after itself", async () => {
@@ -158,8 +158,8 @@ describe("middleware", () => {
 
         await events.request(request)
 
-        expect(requestHandler1.mock.calls.length).toBe(1)
-        expect(middleware.mock.calls.length).toBe(1)
+        expect(requestHandler1).toHaveBeenCalled()
+        expect(middleware).toHaveBeenCalled()
     })
 
     test("middleware can reject requests and plugins don't recieve them", async () => {
@@ -168,8 +168,8 @@ describe("middleware", () => {
 
         await events.request(request).catch(() => {})
 
-        expect(requestHandler1.mock.calls.length).toBe(0)
-        expect(rejectingMiddleware.mock.calls.length).toBe(1)
+        expect(requestHandler1).not.toHaveBeenCalled()
+        expect(rejectingMiddleware).toHaveBeenCalled()
     })
 
     test("middleware can resolve requests and plugins don't recieve them", async () => {
@@ -178,7 +178,7 @@ describe("middleware", () => {
 
         await events.request(request).catch(() => {})
 
-        expect(requestHandler1.mock.calls.length).toBe(0)
-        expect(resolvingMiddleware.mock.calls.length).toBe(1)
+        expect(requestHandler1).not.toHaveBeenCalled()
+        expect(resolvingMiddleware).toHaveBeenCalled()
     })
 })
