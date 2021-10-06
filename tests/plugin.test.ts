@@ -12,13 +12,12 @@ describe("loading of plugins", () => {
     test("plugins are loaded from a folder", async () => {
         let pluginHandle: PluginHandle = await loadPlugins([PLUGIN_PATH], events)
 
-        expect(pluginHandle.plugins.map(p => p.info.name)).toEqual(["firstPlugin", "secondPlugin"])
+        expect(pluginHandle.plugins.map(p => p.info.name)).toEqual(["firstplugin", "secondplugin"])
     })
 
     test("invalid folders are not loaded", async () => {
         /* This includes folders that:
          * dont have a package.json
-         * dont have a pluginInfo entry in the package.json
          * cannot be loaded by require
          * dont have an init function in the entrypoint of the module
          */
@@ -44,7 +43,7 @@ describe("loading of plugins", () => {
             events
         )
 
-        expect(pluginHandle.plugins.map(p => p.info.name)).toEqual(["firstPlugin", "secondPlugin"])
+        expect(pluginHandle.plugins.map(p => p.info.name)).toEqual(["firstplugin", "secondplugin"])
     })
 })
 

@@ -60,9 +60,10 @@ async function loadPlugin(pluginFolderPath: string, pluginLoader: PluginLoader):
     return readFile(packageJson)
         .then(content => content.toString())
         .then(JSON.parse)
-        .then(content => content.pluginInfo)
-        .then(async (pluginInfo: PluginInfo) => ({
-            info: pluginInfo,
+        .then(async (content: any) => ({
+            info: {
+                name: content.name,
+            },
             module: await initializePlugin(pluginFolderPath, pluginLoader),
         }))
         .then(pluginInfo => ({ ...pluginInfo, path: pluginFolderPath }))
