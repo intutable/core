@@ -1,3 +1,4 @@
+import { timeStamp } from "console"
 import { Middleware, MiddlewareResponse, MiddlewareResponseType } from "./middleware"
 
 interface Message {
@@ -19,11 +20,13 @@ export class EventSystem {
     private notificationHandlers: { [index: string]: NotificationHandler[] }
     private requestHandlers: { [index: string]: { [index: string]: RequestHandler } }
     private middlewares: Middleware[]
+    private debugging: boolean
 
-    constructor() {
+    constructor(debugging: boolean = false) {
         this.notificationHandlers = {}
         this.requestHandlers = {}
         this.middlewares = []
+        this.debugging = debugging
     }
 
     public listenForNotifications(channel: string, callback: NotificationHandler) {
@@ -32,6 +35,8 @@ export class EventSystem {
         } else {
             this.notificationHandlers[channel] = [callback]
         }
+
+        this.log("added notification listener for", channel)
     }
 
     public listenForRequests(channel: string, method: string, handler: RequestHandler) {
@@ -47,13 +52,17 @@ export class EventSystem {
         }
 
         this.requestHandlers[channel][method] = handler
+
+        this.log("added request listener for", channel, method)
     }
 
     public addMiddleware(middleware: Middleware) {
         this.middlewares.push(middleware)
+        this.log("middleware added")
     }
 
     public async request(request: CoreRequest): Promise<CoreResponse> {
+        this.log("request", request)
         let { type, payload } = await this.handleMiddleware(request)
 
         if (type === MiddlewareResponseType.Resolve) {
@@ -66,10 +75,18 @@ export class EventSystem {
     }
 
     public notify(notification: CoreNotification) {
+        this.log("notification", notification)
+
         if (this.notificationHandlers[notification.channel]) {
             for (let subscriber of this.notificationHandlers[notification.channel]) {
                 subscriber(notification)
             }
+        }
+    }
+
+    private log(...args: any[]) {
+        if (this.debugging) {
+            console.log(...args)
         }
     }
 
