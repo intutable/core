@@ -17,7 +17,7 @@ const otherChannel = "otherChannel"
 const method = "method"
 const otherMethod = "otherMethod"
 
-const notification: CoreNotification = { message: "this is a message" }
+const notification: CoreNotification = { channel, message: "this is a message" }
 const request: CoreRequest = { channel, method, message: "this is a request" }
 
 beforeEach(async () => {
@@ -49,7 +49,7 @@ beforeEach(async () => {
 describe("notification events", () => {
     test("subscribers are notified about events", () => {
         events.listenForNotification(channel, notificationHandler1)
-        events.notify(channel, notification)
+        events.notify(notification)
 
         expect(notificationHandler1.mock.calls.length).toBe(1)
         expect(notificationHandler1.mock.calls[0]).toEqual([notification])
@@ -64,8 +64,8 @@ describe("notification events", () => {
     test("subscribers are notified about mutliple events", () => {
         events.listenForNotification(channel, notificationHandler1)
 
-        events.notify(channel, notification)
-        events.notify(channel, notification)
+        events.notify(notification)
+        events.notify(notification)
 
         expect(notificationHandler1.mock.calls.length).toBe(2)
     })
@@ -74,7 +74,7 @@ describe("notification events", () => {
         events.listenForNotification(channel, notificationHandler1)
         events.listenForNotification(channel, notificationHandler2)
 
-        events.notify(channel, notification)
+        events.notify(notification)
 
         expect(notificationHandler1.mock.calls.length).toBe(1)
         expect(notificationHandler2.mock.calls.length).toBe(1)
@@ -84,8 +84,8 @@ describe("notification events", () => {
         events.listenForNotification(channel, notificationHandler1)
         events.listenForNotification(otherChannel, notificationHandler2)
 
-        events.notify(channel, notification)
-        events.notify(otherChannel, {})
+        events.notify(notification)
+        events.notify({ channel: otherChannel })
 
         expect(notificationHandler1.mock.calls.length).toBe(1)
         expect(notificationHandler2.mock.calls.length).toBe(1)

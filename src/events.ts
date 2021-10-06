@@ -6,7 +6,11 @@ export interface CoreRequest {
     [index: string]: any
 }
 export type CoreResponse = object
-export type CoreNotification = object
+
+export interface CoreNotification {
+    channel: string
+    [index: string]: any
+}
 
 export type RequestHandler = (request: CoreRequest) => Promise<CoreResponse>
 export type NotificationHandler = (notification: CoreNotification) => void
@@ -36,7 +40,8 @@ export class EventSystem {
         }
 
         if (this.requestHandlers[channel][method]) {
-            this.notify("core", {
+            this.notify({
+                channel: "core",
                 message: `overwriting request handler for method ${method} in channel ${channel}`,
             })
         }
@@ -60,10 +65,10 @@ export class EventSystem {
         }
     }
 
-    public notify(channel: string, message: CoreNotification) {
-        if (this.notificationHandlers[channel]) {
-            for (let subscriber of this.notificationHandlers[channel]) {
-                subscriber(message)
+    public notify(notification: CoreNotification) {
+        if (this.notificationHandlers[notification.channel]) {
+            for (let subscriber of this.notificationHandlers[notification.channel]) {
+                subscriber(notification)
             }
         }
     }

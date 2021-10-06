@@ -1,4 +1,4 @@
-import { readdir, readFile } from "fs/promises"
+import { readFile } from "fs/promises"
 import { EventSystem } from "../events"
 import { join as joinPath } from "path"
 import { PluginLoader } from "./PluginLoader"
@@ -37,15 +37,17 @@ function onPluginLoadError(
 ) {
     switch (err.code) {
         case "NO_INIT":
-            events.notify("core-plugin", err)
+            events.notify({ channel: "core/plugin", ...err })
             break
         case "ENOENT":
-            events.notify("core-plugin", {
+            events.notify({
+                channel: "core/plugin",
                 message: `the folder ${pluginPath} does not contain a correct package.json and is ignored`,
             })
             break
         default:
-            events.notify("core-plugin", {
+            events.notify({
+                channel: "core-plugin",
                 ...err,
                 message: `an unexpected error occured while trying to load the plugin at ${pluginPath}: ${err.message}`,
             })
