@@ -48,7 +48,7 @@ beforeEach(async () => {
 
 describe("notification events", () => {
     test("subscribers are notified about events", () => {
-        events.listenForNotification(channel, notificationHandler1)
+        events.listenForNotifications(channel, notificationHandler1)
         events.notify(notification)
 
         expect(notificationHandler1.mock.calls.length).toBe(1)
@@ -56,13 +56,13 @@ describe("notification events", () => {
     })
 
     test("the event handler is only called when the event is triggered", () => {
-        events.listenForNotification(channel, notificationHandler1)
+        events.listenForNotifications(channel, notificationHandler1)
 
         expect(notificationHandler1.mock.calls.length).toBe(0)
     })
 
     test("subscribers are notified about mutliple events", () => {
-        events.listenForNotification(channel, notificationHandler1)
+        events.listenForNotifications(channel, notificationHandler1)
 
         events.notify(notification)
         events.notify(notification)
@@ -71,8 +71,8 @@ describe("notification events", () => {
     })
 
     test("multiple components can listen to the same channel", () => {
-        events.listenForNotification(channel, notificationHandler1)
-        events.listenForNotification(channel, notificationHandler2)
+        events.listenForNotifications(channel, notificationHandler1)
+        events.listenForNotifications(channel, notificationHandler2)
 
         events.notify(notification)
 
@@ -81,8 +81,8 @@ describe("notification events", () => {
     })
 
     test("multiple components can listen to different channels", () => {
-        events.listenForNotification(channel, notificationHandler1)
-        events.listenForNotification(otherChannel, notificationHandler2)
+        events.listenForNotifications(channel, notificationHandler1)
+        events.listenForNotifications(otherChannel, notificationHandler2)
 
         events.notify(notification)
         events.notify({ channel: otherChannel })
@@ -94,7 +94,7 @@ describe("notification events", () => {
 
 describe("requests and responds via the event bus", () => {
     test("components can listen on channels and methods for requests", async () => {
-        events.listenForRequest(channel, method, requestHandler1)
+        events.listenForRequests(channel, method, requestHandler1)
 
         await events.request(request)
 
@@ -103,7 +103,7 @@ describe("requests and responds via the event bus", () => {
 
     test("requests are answered by responses", async () => {
         const response = { message: "this is a response" }
-        events.listenForRequest(channel, method, request => Promise.resolve(response))
+        events.listenForRequests(channel, method, request => Promise.resolve(response))
 
         let recieved = await events.request(request)
         expect(recieved).toBe(response)
@@ -111,7 +111,7 @@ describe("requests and responds via the event bus", () => {
 
     test("requests can be rejected", async () => {
         const error = { message: "this is an error" }
-        events.listenForRequest(channel, method, request => Promise.reject(error))
+        events.listenForRequests(channel, method, request => Promise.reject(error))
 
         await events.request(request).catch(recieved => {
             expect(recieved).toBe(error)
@@ -119,8 +119,8 @@ describe("requests and responds via the event bus", () => {
     })
 
     test("registering the same method again results in the first handler to be overwritten", async () => {
-        events.listenForRequest(channel, method, requestHandler1)
-        events.listenForRequest(channel, method, requestHandler2)
+        events.listenForRequests(channel, method, requestHandler1)
+        events.listenForRequests(channel, method, requestHandler2)
 
         await events.request(request)
 
@@ -130,8 +130,8 @@ describe("requests and responds via the event bus", () => {
 
     //TODO: is this behaviour desireable?
     test("different modules can listen on the same channel but different methods", async () => {
-        events.listenForRequest(channel, method, requestHandler1)
-        events.listenForRequest(channel, otherMethod, requestHandler2)
+        events.listenForRequests(channel, method, requestHandler1)
+        events.listenForRequests(channel, otherMethod, requestHandler2)
 
         await events.request(request)
         await events.request({ channel, method: otherMethod })
@@ -143,7 +143,7 @@ describe("requests and responds via the event bus", () => {
 
 describe("middleware", () => {
     test("middleware is subscribed to all channels", async () => {
-        events.listenForRequest(channel, method, requestHandler1)
+        events.listenForRequests(channel, method, requestHandler1)
         events.addMiddleware(middleware)
 
         await events.request(request)
@@ -154,7 +154,7 @@ describe("middleware", () => {
 
     test("middleware receives events on channels that are registered after itself", async () => {
         events.addMiddleware(middleware)
-        events.listenForRequest(channel, method, requestHandler1)
+        events.listenForRequests(channel, method, requestHandler1)
 
         await events.request(request)
 
@@ -164,7 +164,7 @@ describe("middleware", () => {
 
     test("middleware can reject requests and plugins don't recieve them", async () => {
         events.addMiddleware(rejectingMiddleware)
-        events.listenForRequest(channel, method, requestHandler1)
+        events.listenForRequests(channel, method, requestHandler1)
 
         await events.request(request).catch(() => {})
 
@@ -174,7 +174,7 @@ describe("middleware", () => {
 
     test("middleware can resolve requests and plugins don't recieve them", async () => {
         events.addMiddleware(resolvingMiddleware)
-        events.listenForRequest(channel, method, requestHandler1)
+        events.listenForRequests(channel, method, requestHandler1)
 
         await events.request(request).catch(() => {})
 

@@ -5,7 +5,7 @@ export class PluginLoader {
 
     // These functions are just wrapper around their conterpart in EventSystem.
     // By doing it this way there is no boilerplate/ duplication involved
-    listenForNotification: EventSystem["listenForNotification"]
+    listenForNotifications: EventSystem["listenForNotifications"]
     addMiddleware: EventSystem["addMiddleware"]
     request: EventSystem["request"]
     notify: EventSystem["notify"]
@@ -13,18 +13,18 @@ export class PluginLoader {
     constructor(events: EventSystem) {
         this.events = events
 
-        this.listenForNotification = events.listenForNotification.bind(events)
+        this.listenForNotifications = events.listenForNotifications.bind(events)
         this.addMiddleware = events.addMiddleware.bind(events)
         this.notify = events.notify.bind(events)
         this.request = events.request.bind(events)
     }
 
-    public listenForRequest(channel: string) {
+    public listenForRequests(channel: string) {
         // This is necessary for chaining:
         // listenForRequests(...).on(...).on(...)
         const methodRegisterInterface = {
             on: (method: string, handler: RequestHandler) => {
-                this.events.listenForRequest(channel, method, handler)
+                this.events.listenForRequests(channel, method, handler)
                 return methodRegisterInterface
             },
         }

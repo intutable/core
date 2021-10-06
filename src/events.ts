@@ -26,7 +26,7 @@ export class EventSystem {
         this.middlewares = []
     }
 
-    public listenForNotification(channel: string, callback: NotificationHandler) {
+    public listenForNotifications(channel: string, callback: NotificationHandler) {
         if (this.notificationHandlers[channel]) {
             this.notificationHandlers[channel].push(callback)
         } else {
@@ -34,7 +34,7 @@ export class EventSystem {
         }
     }
 
-    public listenForRequest(channel: string, method: string, handler: RequestHandler) {
+    public listenForRequests(channel: string, method: string, handler: RequestHandler) {
         if (!this.requestHandlers[channel]) {
             this.requestHandlers[channel] = {}
         }
