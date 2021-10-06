@@ -1,16 +1,16 @@
 import { Middleware, MiddlewareResponse, MiddlewareResponseType } from "./middleware"
 
-export interface CoreRequest {
+interface Message {
     channel: string
-    method: string
     [index: string]: any
 }
-export type CoreResponse = object
 
-export interface CoreNotification {
-    channel: string
-    [index: string]: any
+export interface CoreRequest extends Message {
+    method: string
 }
+export interface CoreNotification extends Message {}
+
+export type CoreResponse = object
 
 export type RequestHandler = (request: CoreRequest) => Promise<CoreResponse>
 export type NotificationHandler = (notification: CoreNotification) => void
