@@ -3,12 +3,12 @@ import { Middleware, MiddlewareResponse, MiddlewareResponseType } from "./middle
 
 interface Message {
     channel: string
+    method: string
     [index: string]: any
 }
 
-export interface CoreRequest extends Message {
-    method: string
-}
+export interface CoreRequest extends Message {}
+
 export interface CoreNotification extends Message {}
 
 export type CoreResponse = object
@@ -17,7 +17,7 @@ export type RequestHandler = (request: CoreRequest) => Promise<CoreResponse>
 export type NotificationHandler = (notification: CoreNotification) => void
 
 export class EventSystem {
-    private notificationHandlers: { [index: string]: NotificationHandler[] }
+    private notificationHandlers: { [index: string]: { [index: string]: NotificationHandler[] } }
     private requestHandlers: { [index: string]: { [index: string]: RequestHandler } }
     private middlewares: Middleware[]
     private debugging: boolean
@@ -29,12 +29,16 @@ export class EventSystem {
         this.debugging = debugging
     }
 
-    public listenForNotifications(channel: string, callback: NotificationHandler) {
-        if (this.notificationHandlers[channel]) {
-            this.notificationHandlers[channel].push(callback)
-        } else {
-            this.notificationHandlers[channel] = [callback]
+    public listenForNotifications(channel: string, method: string, handler: NotificationHandler) {
+        if (!this.notificationHandlers[channel]) {
+            this.notificationHandlers[channel] = {}
         }
+
+        if (!this.notificationHandlers[channel][method]) {
+            this.notificationHandlers[channel][method] = []
+        }
+
+        this.notificationHandlers[channel][method].push(handler)
 
         this.log("added notification listener for", channel)
     }
@@ -47,6 +51,7 @@ export class EventSystem {
         if (this.requestHandlers[channel][method]) {
             this.notify({
                 channel: "core",
+                method: "handler-overwrite",
                 message: `overwriting request handler for method ${method} in channel ${channel}`,
             })
         }
@@ -77,8 +82,10 @@ export class EventSystem {
     public notify(notification: CoreNotification) {
         this.log("notification", notification)
 
-        if (this.notificationHandlers[notification.channel]) {
-            for (let subscriber of this.notificationHandlers[notification.channel]) {
+        let { channel, method } = notification
+
+        if (this.notificationHandlers[channel]) {
+            for (let subscriber of this.notificationHandlers[channel][method]) {
                 subscriber(notification)
             }
         }

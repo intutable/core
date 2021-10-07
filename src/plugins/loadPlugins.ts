@@ -37,17 +37,19 @@ function onPluginLoadError(
 ) {
     switch (err.code) {
         case "NO_INIT":
-            events.notify({ channel: "core/plugin", ...err })
+            events.notify({ channel: "core", method: "plugin-load-error", ...err })
             break
         case "ENOENT":
             events.notify({
-                channel: "core/plugin",
+                channel: "core",
+                method: "plugin-load-error",
                 message: `the folder ${pluginPath} does not contain a correct package.json and is ignored`,
             })
             break
         default:
             events.notify({
                 channel: "core-plugin",
+                method: "plugin-load-error",
                 ...err,
                 message: `an unexpected error occured while trying to load the plugin at ${pluginPath}: ${err.message}`,
             })

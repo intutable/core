@@ -17,7 +17,7 @@ const otherChannel = "otherChannel"
 const method = "method"
 const otherMethod = "otherMethod"
 
-const notification: CoreNotification = { channel, message: "this is a message" }
+const notification: CoreNotification = { channel, method, message: "this is a message" }
 const request: CoreRequest = { channel, method, message: "this is a request" }
 
 beforeEach(async () => {
@@ -48,7 +48,7 @@ beforeEach(async () => {
 
 describe("notification events", () => {
     test("subscribers are notified about events", () => {
-        events.listenForNotifications(channel, notificationHandler1)
+        events.listenForNotifications(channel, method, notificationHandler1)
         events.notify(notification)
 
         expect(notificationHandler1).toHaveBeenCalled()
@@ -56,13 +56,13 @@ describe("notification events", () => {
     })
 
     test("the event handler is only called when the event is triggered", () => {
-        events.listenForNotifications(channel, notificationHandler1)
+        events.listenForNotifications(channel, method, notificationHandler1)
 
         expect(notificationHandler1).not.toHaveBeenCalled()
     })
 
     test("subscribers are notified about mutliple events", () => {
-        events.listenForNotifications(channel, notificationHandler1)
+        events.listenForNotifications(channel, method, notificationHandler1)
 
         events.notify(notification)
         events.notify(notification)
@@ -71,8 +71,8 @@ describe("notification events", () => {
     })
 
     test("multiple components can listen to the same channel", () => {
-        events.listenForNotifications(channel, notificationHandler1)
-        events.listenForNotifications(channel, notificationHandler2)
+        events.listenForNotifications(channel, method, notificationHandler1)
+        events.listenForNotifications(channel, method, notificationHandler2)
 
         events.notify(notification)
 
@@ -81,15 +81,16 @@ describe("notification events", () => {
     })
 
     test("multiple components can listen to different channels", () => {
-        events.listenForNotifications(channel, notificationHandler1)
-        events.listenForNotifications(otherChannel, notificationHandler2)
-
+        events.listenForNotifications(channel, method, notificationHandler1)
+        events.listenForNotifications(otherChannel, method, notificationHandler2)
         events.notify(notification)
-        events.notify({ channel: otherChannel })
+        events.notify({ channel: otherChannel, method })
 
         expect(notificationHandler1).toHaveBeenCalled()
         expect(notificationHandler2).toHaveBeenCalled()
     })
+
+    test.todo("same channel different method")
 })
 
 describe("requests and responds via the event bus", () => {
