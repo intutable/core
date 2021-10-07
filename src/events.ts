@@ -1,54 +1,73 @@
+import { timeStamp } from "console"
 import { Middleware, MiddlewareResponse, MiddlewareResponseType } from "./middleware"
 
-export interface CoreRequest {
+interface Message {
     channel: string
     method: string
     [index: string]: any
 }
+
+export interface CoreRequest extends Message {}
+
+export interface CoreNotification extends Message {}
+
 export type CoreResponse = object
-export type CoreNotification = object
 
 export type RequestHandler = (request: CoreRequest) => Promise<CoreResponse>
 export type NotificationHandler = (notification: CoreNotification) => void
 
 export class EventSystem {
-    private notificationHandlers: { [index: string]: NotificationHandler[] }
+    private notificationHandlers: { [index: string]: { [index: string]: NotificationHandler[] } }
     private requestHandlers: { [index: string]: { [index: string]: RequestHandler } }
     private middlewares: Middleware[]
+    private debugging: boolean
 
-    constructor() {
+    constructor(debugging: boolean = false) {
         this.notificationHandlers = {}
         this.requestHandlers = {}
         this.middlewares = []
+        this.debugging = debugging
     }
 
-    public listenForNotification(channel: string, callback: NotificationHandler) {
-        if (this.notificationHandlers[channel]) {
-            this.notificationHandlers[channel].push(callback)
-        } else {
-            this.notificationHandlers[channel] = [callback]
+    public listenForNotifications(channel: string, method: string, handler: NotificationHandler) {
+        if (!this.notificationHandlers[channel]) {
+            this.notificationHandlers[channel] = {}
         }
+
+        if (!this.notificationHandlers[channel][method]) {
+            this.notificationHandlers[channel][method] = []
+        }
+
+        this.notificationHandlers[channel][method].push(handler)
+
+        this.log("added notification listener for", channel)
     }
 
-    public listenForRequest(channel: string, method: string, handler: RequestHandler) {
+    public listenForRequests(channel: string, method: string, handler: RequestHandler) {
         if (!this.requestHandlers[channel]) {
             this.requestHandlers[channel] = {}
         }
 
         if (this.requestHandlers[channel][method]) {
-            this.notify("core", {
+            this.notify({
+                channel: "core",
+                method: "handler-overwrite",
                 message: `overwriting request handler for method ${method} in channel ${channel}`,
             })
         }
 
         this.requestHandlers[channel][method] = handler
+
+        this.log("added request listener for", channel, method)
     }
 
     public addMiddleware(middleware: Middleware) {
         this.middlewares.push(middleware)
+        this.log("middleware added")
     }
 
     public async request(request: CoreRequest): Promise<CoreResponse> {
+        this.log("request", request)
         let { type, payload } = await this.handleMiddleware(request)
 
         if (type === MiddlewareResponseType.Resolve) {
@@ -60,11 +79,32 @@ export class EventSystem {
         }
     }
 
-    public notify(channel: string, message: CoreNotification) {
-        if (this.notificationHandlers[channel]) {
-            for (let subscriber of this.notificationHandlers[channel]) {
-                subscriber(message)
+    public notify(notification: CoreNotification) {
+        this.log("notification", notification)
+
+        let { channel, method } = notification
+
+        if (!this.notificationHandlers[channel] || !this.notificationHandlers[channel][method]) {
+            if (method !== "undefinded-notification-handler") {
+                this.notify({
+                    channel: "core",
+                    method: "undefinded-notification-handler",
+                    message: "notification could not be delivered to anything",
+                    notification,
+                })
             }
+
+            return
+        }
+
+        for (let subscriber of this.notificationHandlers[channel][method]) {
+            subscriber(notification)
+        }
+    }
+
+    private log(...args: any[]) {
+        if (this.debugging) {
+            console.log(...args)
         }
     }
 
