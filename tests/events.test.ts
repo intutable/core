@@ -90,6 +90,13 @@ describe("notification events", () => {
         expect(notificationHandler2).toHaveBeenCalled()
     })
 
+    test("method does not exist", async () => {
+        events.listenForNotifications(channel, method, notificationHandler1)
+        events.notify({ channel, method: otherMethod })
+
+        expect(notificationHandler1).not.toHaveBeenCalled()
+    })
+
     test.todo("same channel different method")
 })
 

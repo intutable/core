@@ -84,10 +84,21 @@ export class EventSystem {
 
         let { channel, method } = notification
 
-        if (this.notificationHandlers[channel]) {
-            for (let subscriber of this.notificationHandlers[channel][method]) {
-                subscriber(notification)
+        if (!this.notificationHandlers[channel] || !this.notificationHandlers[channel][method]) {
+            if (method !== "undefinded-notification-handler") {
+                this.notify({
+                    channel: "core",
+                    method: "undefinded-notification-handler",
+                    message: "notification could not be delivered to anything",
+                    notification,
+                })
             }
+
+            return
+        }
+
+        for (let subscriber of this.notificationHandlers[channel][method]) {
+            subscriber(notification)
         }
     }
 
