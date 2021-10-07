@@ -97,7 +97,15 @@ describe("notification events", () => {
         expect(notificationHandler1).not.toHaveBeenCalled()
     })
 
-    test.todo("same channel different method")
+    test("same channel different method", async () => {
+        events.listenForNotifications(channel, method, notificationHandler1)
+        events.listenForNotifications(channel, otherMethod, notificationHandler2)
+        events.notify(notification)
+        events.notify({ channel, method: otherMethod })
+
+        expect(notificationHandler1).toHaveBeenCalled()
+        expect(notificationHandler2).toHaveBeenCalled()
+    })
 })
 
 describe("requests and responds via the event bus", () => {
