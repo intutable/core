@@ -8,7 +8,7 @@
         "build": "tsc",
         "test": "jest --coverage tests",
         "test:full": "npm test",
-        "format": "prettier --write .",
+        "format": "npx prettier --write .",
         "prepare": "husky install"
     },
     "repository": {
