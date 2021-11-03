@@ -79,9 +79,11 @@ describe("loading of plugins", () => {
 
 describe("communication of plugins", () => {
     test("plugins can answer requests on the event bus ", async () => {
-        await createPlugin("testPlugin1", createIndexFile("testPlugin1"))
+        const PLUGIN_NAME = "testPluginForRequestAnswers"
+
+        await createPlugin(PLUGIN_NAME, createIndexFile(PLUGIN_NAME))
         await loadPlugins([TEST_PLUGIN_PATH + "*"], events)
-        const response = await events.request({ channel: "testPlugin1", method: "greeting" })
+        const response = await events.request({ channel: PLUGIN_NAME, method: "greeting" })
 
         expect(response).toEqual({ message: "Hello from the first plugin" })
     })
