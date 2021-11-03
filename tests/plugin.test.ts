@@ -24,8 +24,8 @@ afterEach(async () => {
 
 describe("loading of plugins", () => {
     test("plugins are loaded from a folder", async () => {
-        await createPlugin("testPlugin1", createIndexFile("channel1"))
-        await createPlugin("testPlugin2", createIndexFile("channel2"))
+        await createPlugin({ pluginName: "testPlugin1", indexContent: createIndexFile("channel1") })
+        await createPlugin({ pluginName: "testPlugin2", indexContent: createIndexFile("channel2") })
 
         let pluginHandle: PluginHandle = await loadPlugins([TEST_PLUGIN_PATH + "*"], events)
 
@@ -38,8 +38,15 @@ describe("loading of plugins", () => {
          * cannot be loaded by require
          * dont have an init function in the entrypoint of the module
          */
-        await createPlugin("missingPackageJson", createIndexFile("channel1"), false)
-        await createPlugin("noInitFile", createIndexFile("channel1", "definitelyNotInit"))
+        await createPlugin({
+            pluginName: "missingPackageJson",
+            indexContent: createIndexFile("channel1"),
+            createPackage: false,
+        })
+        await createPlugin({
+            pluginName: "noInitFile",
+            indexContent: createIndexFile("channel1", "definitelyNotInit"),
+        })
 
         let pluginHandle: PluginHandle = await loadPlugins([TEST_PLUGIN_PATH + "*"], events)
 
@@ -48,7 +55,7 @@ describe("loading of plugins", () => {
 
     test("discovered plugins are loaded as node modules", async () => {
         let pluginName: string = "testPlugin123"
-        await createPlugin(pluginName, createIndexFile("channel1"))
+        await createPlugin({ pluginName: pluginName, indexContent: createIndexFile("channel1") })
         let pluginHandle: PluginHandle = await loadPlugins([TEST_PLUGIN_PATH + "*"], events)
 
         let firstPlugin = pluginHandle.plugins[0]
@@ -59,13 +66,16 @@ describe("loading of plugins", () => {
     })
 
     test("plugins can be loaded from multiple folders", async () => {
-        await createPlugin(
-            "firstplugin",
-            createIndexFile("channel1"),
-            true,
-            "tests/testOtherPlugins/"
-        )
-        await createPlugin("secondplugin", createIndexFile("channel2"))
+        await createPlugin({
+            pluginName: "firstplugin",
+            indexContent: createIndexFile("channel1"),
+            createPackage: true,
+            pluginFolder: "tests/testOtherPlugins/",
+        })
+        await createPlugin({
+            pluginName: "secondplugin",
+            indexContent: createIndexFile("channel2"),
+        })
         let pluginHandle: PluginHandle = await loadPlugins(
             ["tests/testOtherPlugins/*", TEST_PLUGIN_PATH + "*"],
             events
@@ -81,7 +91,7 @@ describe("communication of plugins", () => {
     test("plugins can answer requests on the event bus ", async () => {
         const PLUGIN_NAME = "testPluginForRequestAnswers"
 
-        await createPlugin(PLUGIN_NAME, createIndexFile(PLUGIN_NAME))
+        await createPlugin({ pluginName: PLUGIN_NAME, indexContent: createIndexFile(PLUGIN_NAME) })
         await loadPlugins([TEST_PLUGIN_PATH + "*"], events)
         const response = await events.request({ channel: PLUGIN_NAME, method: "greeting" })
 
@@ -89,12 +99,19 @@ describe("communication of plugins", () => {
     })
 })
 
-async function createPlugin(
-    pluginName: string,
-    indexContent: string,
+interface PluginOptions {
+    pluginName: string
+    indexContent: string
+    createPackage?: boolean
+    pluginFolder?: string
+}
+
+async function createPlugin({
+    pluginName,
+    indexContent,
+    pluginFolder = TEST_PLUGIN_PATH,
     createPackage = true,
-    pluginFolder = TEST_PLUGIN_PATH
-) {
+}: PluginOptions) {
     await fs.promises.mkdir(pluginFolder + pluginName, { recursive: true })
     if (createPackage) {
         await fs.promises.writeFile(
