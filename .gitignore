@@ -153,3 +153,4 @@ tags
 .history/
 
 *.db
+.idea/

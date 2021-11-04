@@ -2,3 +2,14 @@
 dist
 build
 coverage
+node_modules
+
+.gitignore
+.package.json
+.package-lock.json
+.gitlab-ci.yml
+.npmrc
+jest.config.js
+LICENSE
+README.md
+tsconfig.json
