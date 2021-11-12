@@ -1,5 +1,5 @@
-import { EventSystem, CoreNotification } from "../src/events"
-import { PluginHandle, loadPlugins, Plugin } from "../src/plugins"
+import { EventSystem } from "../src/events"
+import { PluginHandle, loadPlugins } from "../src/plugins"
 
 import path from "path"
 import fs from "fs"
@@ -7,11 +7,6 @@ import fs from "fs"
 const TEST_PLUGIN_PATH = "tests/testPlugins/"
 
 let events = new EventSystem()
-
-interface packageJson {
-    name: string
-    version: string
-}
 
 // make sure to delete every test plugin before the test starts in case of test errors
 beforeEach(async () => {
@@ -27,9 +22,9 @@ describe("loading of plugins", () => {
         await createPlugin({ name: "testPlugin1", channel: "channel1" })
         await createPlugin({ name: "testPlugin2", channel: "channel2" })
 
-        let pluginHandle: PluginHandle = await loadPlugins([TEST_PLUGIN_PATH + "*"], events)
+        let pluginHandle = await loadPlugins([TEST_PLUGIN_PATH + "*"], events)
 
-        expect(pluginHandle.plugins.map(p => p.info.name)).toEqual(["testPlugin1", "testPlugin2"])
+        expect(loadedPluginNames(pluginHandle)).toEqual(["testPlugin1", "testPlugin2"])
     })
 
     test("invalid folders are not loaded", async () => {
@@ -77,14 +72,40 @@ describe("loading of plugins", () => {
             name: "secondplugin",
             channel: "channel2",
         })
-        let pluginHandle: PluginHandle = await loadPlugins(
+        let pluginHandle = await loadPlugins(
             ["tests/testOtherPlugins/*", TEST_PLUGIN_PATH + "*"],
             events
         )
 
-        expect(pluginHandle.plugins.map(p => p.info.name)).toEqual(["firstplugin", "secondplugin"])
+        expect(loadedPluginNames(pluginHandle)).toEqual(["firstplugin", "secondplugin"])
 
         await fs.promises.rm("tests/testOtherPlugins/", { recursive: true, force: true })
+    })
+
+    test("plugins are loaded after their dependencies", async () => {
+        await createPlugin({
+            name: "firstplugin",
+            channel: "channel1",
+            dependencies: {
+                secondplugin: "1.0.0",
+            },
+        })
+
+        await createPlugin({
+            name: "secondplugin",
+            channel: "channel2",
+        })
+
+        let pluginHandle = await loadPlugins(
+            [
+                path.join(TEST_PLUGIN_PATH, "firstplugin"),
+                path.join(TEST_PLUGIN_PATH, "secondplugin"),
+            ],
+            events
+        )
+
+        // second is loaded first because first depends on it
+        expect(loadedPluginNames(pluginHandle)).toEqual(["secondplugin", "firstplugin"])
     })
 })
 
@@ -106,6 +127,7 @@ interface PluginOptions {
     initFunctionName?: string
     createPackage?: boolean
     folder?: string
+    [key: string]: any
 }
 
 async function createPlugin({
@@ -114,12 +136,13 @@ async function createPlugin({
     folder = TEST_PLUGIN_PATH,
     createPackage = true,
     initFunctionName,
+    ...packageJsonContent
 }: PluginOptions) {
     await fs.promises.mkdir(folder + name, { recursive: true })
     if (createPackage) {
         await fs.promises.writeFile(
             folder + name + "/package.json",
-            JSON.stringify(createPackageJson(name, "0.1.0"))
+            createPackageJson(name, packageJsonContent)
         )
     }
     await fs.promises.writeFile(
@@ -128,8 +151,8 @@ async function createPlugin({
     )
 }
 
-function createPackageJson(name: string, version: string): packageJson {
-    return { name: `${name}`, version: `${version}` }
+function createPackageJson(name: string, otherContent: object): string {
+    return JSON.stringify({ name: `${name}`, version: "0.1.0", ...otherContent })
 }
 
 function createIndexFile(
@@ -148,4 +171,8 @@ function createIndexFile(
 
 async function deleteTestPlugins() {
     await fs.promises.rm(TEST_PLUGIN_PATH, { recursive: true, force: true })
+}
+
+function loadedPluginNames(pluginHandle: PluginHandle): string[] {
+    return pluginHandle.plugins.map(p => p.info.name)
 }
