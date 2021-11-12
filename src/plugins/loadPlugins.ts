@@ -19,7 +19,9 @@ export async function loadPlugins(patterns: string[], events: EventSystem): Prom
         glob.sync(pattern, { cwd: joinPath(__dirname, "../.."), absolute: true })
     )
 
-    const pluginInfos = await loadPluginInfos(pluginFolders, events)
+    let pluginInfos = await loadPluginInfos(pluginFolders, events).then(infos =>
+        sortByDependencies(infos)
+    )
 
     for (const pluginInfo of pluginInfos) {
         await loadPlugin(pluginInfo, pluginLoader)
@@ -51,6 +53,22 @@ async function loadPluginInfos(pluginPaths: string[], events: EventSystem): Prom
     }
 
     return results
+}
+
+function sortByDependencies(pluginInfos: PluginInfo[]): PluginInfo[] {
+    return pluginInfos.sort((a, b) => {
+        if (!b.dependencies) {
+            return 1
+        }
+
+        if (a.name in b.dependencies) {
+            return -1 // a depends on b, put b first
+        } else {
+            // keep the order as is, either b depends on a
+            // or they dont depend on each other
+            return 1
+        }
+    })
 }
 
 function onPluginLoadError(
