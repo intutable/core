@@ -127,15 +127,6 @@ describe("notification events", () => {
         events.notify(notification)
         expect(notificationHandler1.mock.calls.length).toBe(2)
     })
-
-/*
-    test("undefined notification handler notification", async () => {
-        // If no notification handler is defined, the "catch-all" notification-handler
-        // still picks up the sent notification 
-        events.listenForNotifications("core", "undefinded-notification-handler", notificationHandler1);
-        events.notify(notification)
-        expect(notificationHandler1).toHaveBeenCalled()
-    })*/
 })
 
 describe("requests and responds via the event bus", () => {
