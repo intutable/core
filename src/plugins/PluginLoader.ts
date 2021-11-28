@@ -41,4 +41,8 @@ export class PluginLoader {
         }
         return methodRegisterInterface
     }
+
+    public listenForAllNotifications(handler: NotificationHandler) {
+        this.events.listenForAllNotifications(handler)
+    }
 }

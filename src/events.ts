@@ -18,12 +18,15 @@ export type NotificationHandler = (notification: CoreNotification) => void
 
 export class EventSystem {
     private notificationHandlers: { [index: string]: { [index: string]: NotificationHandler[] } }
+    private notificationHandlersAll: NotificationHandler[]
+
     private requestHandlers: { [index: string]: { [index: string]: RequestHandler } }
     private middlewares: Middleware[]
     private debugging: boolean
 
     constructor(debugging: boolean = false) {
         this.notificationHandlers = {}
+        this.notificationHandlersAll = []
         this.requestHandlers = {}
         this.middlewares = []
         this.debugging = debugging
@@ -41,6 +44,12 @@ export class EventSystem {
         this.notificationHandlers[channel][method].push(handler)
 
         this.log("added notification listener for", channel)
+    }
+
+    public listenForAllNotifications(handler: NotificationHandler) {
+        this.notificationHandlersAll.push(handler)
+
+        this.log("added notification listener for all channels")
     }
 
     public listenForRequests(channel: string, method: string, handler: RequestHandler) {
@@ -83,6 +92,10 @@ export class EventSystem {
         this.log("notification", notification)
 
         let { channel, method } = notification
+
+        for (let subscriber of this.notificationHandlersAll) {
+            subscriber(notification)
+        }
 
         if (!this.notificationHandlers[channel] || !this.notificationHandlers[channel][method]) {
             if (method !== "undefinded-notification-handler") {
