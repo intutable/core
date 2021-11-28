@@ -106,6 +106,36 @@ describe("notification events", () => {
         expect(notificationHandler1).toHaveBeenCalled()
         expect(notificationHandler2).toHaveBeenCalled()
     })
+
+    test("listen for all notifications", async () => {
+        // define notificationHandler1 for both methods so that no error message gets thrown
+        // otherwise we get the error message
+        events.listenForNotifications(channel, method, notificationHandler1)
+        events.listenForNotifications(channel, otherMethod, notificationHandler1)
+        events.listenForAllNotifications(notificationHandler2)
+        events.notify(notification)
+        expect(notificationHandler2.mock.calls.length).toBe(1)
+        events.notify({ channel, method: otherMethod })
+
+        expect(notificationHandler2.mock.calls.length).toBe(2)
+    })
+
+    test("undefined-notification-handler notification recieved by all-notification handler", async () => {
+        // If no notification handler is defined, the "catch-all" notification-handler
+        // still picks up the sent notification with no defined target notification listener
+        events.listenForAllNotifications(notificationHandler1)
+        events.notify(notification)
+        expect(notificationHandler1.mock.calls.length).toBe(2)
+    })
+
+/*
+    test("undefined notification handler notification", async () => {
+        // If no notification handler is defined, the "catch-all" notification-handler
+        // still picks up the sent notification 
+        events.listenForNotifications("core", "undefinded-notification-handler", notificationHandler1);
+        events.notify(notification)
+        expect(notificationHandler1).toHaveBeenCalled()
+    })*/
 })
 
 describe("requests and responds via the event bus", () => {
