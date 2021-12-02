@@ -14,16 +14,10 @@ export interface CoreNotification extends Message {}
 export type CoreResponse = object
 
 export type RequestHandlerFunc = (request: CoreRequest) => Promise<CoreResponse>
-export type NotificationHandler = (notification: CoreNotification) => void
-
-type RequestHandlerLookup = {
-    [index: string]: {
-        [index: string]: RequestHandlerFunc
-    }
-}
+export type NotificationHandlerFunc = (notification: CoreNotification) => void
 
 class RequestHandler {
-    private handlers: RequestHandlerLookup
+    private handlers: Record<string, Record<string, RequestHandlerFunc>>
 
     constructor(private events: EventSystem) {
         this.handlers = {}
@@ -59,8 +53,9 @@ class RequestHandler {
 }
 
 export class EventSystem {
-    private notificationHandlers: { [index: string]: { [index: string]: NotificationHandler[] } }
-    private notificationHandlersAll: NotificationHandler[]
+    private notificationHandlers: Record<string, Record<string, NotificationHandlerFunc[]>>
+
+    private notificationHandlersAll: NotificationHandlerFunc[]
 
     private requestHandler: RequestHandler
     private middlewares: Middleware[]
@@ -74,7 +69,11 @@ export class EventSystem {
         this.debugging = debugging
     }
 
-    public listenForNotifications(channel: string, method: string, handler: NotificationHandler) {
+    public listenForNotifications(
+        channel: string,
+        method: string,
+        handler: NotificationHandlerFunc
+    ) {
         if (!this.notificationHandlers[channel]) {
             this.notificationHandlers[channel] = {}
         }
@@ -88,7 +87,7 @@ export class EventSystem {
         this.log("added notification listener for", channel)
     }
 
-    public listenForAllNotifications(handler: NotificationHandler) {
+    public listenForAllNotifications(handler: NotificationHandlerFunc) {
         this.notificationHandlersAll.push(handler)
 
         this.log("added notification listener for all channels")
@@ -143,7 +142,7 @@ export class EventSystem {
         }
     }
 
-    private getNotificationHandlers(channel: string, method: string): NotificationHandler[] {
+    private getNotificationHandlers(channel: string, method: string): NotificationHandlerFunc[] {
         if (this.hasNotificationHandler(channel, method)) {
             return this.notificationHandlers[channel][method].concat(this.notificationHandlersAll)
         } else {
