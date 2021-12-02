@@ -7,9 +7,9 @@ interface Message {
     [index: string]: any
 }
 
-export interface CoreRequest extends Message {}
+export interface CoreRequest extends Message { }
 
-export interface CoreNotification extends Message {}
+export interface CoreNotification extends Message { }
 
 export type CoreResponse = object
 
@@ -93,11 +93,7 @@ export class EventSystem {
 
         let { channel, method } = notification
 
-        for (let subscriber of this.notificationHandlersAll) {
-            subscriber(notification)
-        }
-
-        if (!this.notificationHandlers[channel] || !this.notificationHandlers[channel][method]) {
+        if (!this.hasNotificationHandler(channel, method)) {
             if (method !== "undefinded-notification-handler") {
                 this.notify({
                     channel: "core",
@@ -113,6 +109,19 @@ export class EventSystem {
         for (let subscriber of this.notificationHandlers[channel][method]) {
             subscriber(notification)
         }
+
+        for (let subscriber of this.notificationHandlersAll) {
+            subscriber(notification)
+        }
+    }
+
+    private hasNotificationHandler(channel: string, method: string) {
+        const hasSpecificHandler = this.notificationHandlers[channel]
+            && this.notificationHandlers[channel][method]
+
+        const hasGenericHandler = this.notificationHandlersAll.length != 0
+
+        return hasSpecificHandler || hasGenericHandler
     }
 
     private log(...args: any[]) {
