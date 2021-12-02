@@ -9,6 +9,7 @@ export class PluginLoader {
     addMiddleware: EventSystem["addMiddleware"]
     request: EventSystem["request"]
     notify: EventSystem["notify"]
+    listenForAllNotifications: EventSystem["listenForAllNotifications"]
 
     constructor(events: EventSystem) {
         this.events = events
@@ -16,6 +17,7 @@ export class PluginLoader {
         this.addMiddleware = events.addMiddleware.bind(events)
         this.notify = events.notify.bind(events)
         this.request = events.request.bind(events)
+        this.listenForAllNotifications = events.listenForAllNotifications.bind(events)
     }
 
     public listenForRequests(channel: string) {
@@ -40,9 +42,5 @@ export class PluginLoader {
             },
         }
         return methodRegisterInterface
-    }
-
-    public listenForAllNotifications(handler: NotificationHandler) {
-        this.events.listenForAllNotifications(handler)
     }
 }
