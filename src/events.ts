@@ -93,7 +93,10 @@ export class EventSystem {
 
         let { channel, method } = notification
 
-        if (!this.hasNotificationHandler(channel, method)) {
+        if (
+            !this.hasNotificationHandler(channel, method) &&
+            !this.hasGenericNotificationHandler()
+        ) {
             if (method !== "undefinded-notification-handler") {
                 this.notify({
                     channel: "core",
@@ -106,22 +109,25 @@ export class EventSystem {
             return
         }
 
-        for (let subscriber of this.notificationHandlers[channel][method]) {
-            subscriber(notification)
-        }
-
-        for (let subscriber of this.notificationHandlersAll) {
+        for (let subscriber of this.getNotificationHandlers(channel, method)) {
             subscriber(notification)
         }
     }
 
+    private getNotificationHandlers(channel: string, method: string): NotificationHandler[] {
+        if (this.hasNotificationHandler(channel, method)) {
+            return this.notificationHandlers[channel][method].concat(this.notificationHandlersAll)
+        } else {
+            return this.notificationHandlersAll
+        }
+    }
+
+    private hasGenericNotificationHandler() {
+        return this.notificationHandlersAll.length != 0
+    }
+
     private hasNotificationHandler(channel: string, method: string) {
-        const hasSpecificHandler = this.notificationHandlers[channel]
-            && this.notificationHandlers[channel][method]
-
-        const hasGenericHandler = this.notificationHandlersAll.length != 0
-
-        return hasSpecificHandler || hasGenericHandler
+        return this.notificationHandlers[channel] && this.notificationHandlers[channel][method]
     }
 
     private log(...args: any[]) {
