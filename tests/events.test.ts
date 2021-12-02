@@ -24,8 +24,8 @@ beforeEach(async () => {
     //needs to be reset every time
     // don't use any of the reset functions for this
     // it does not work https://github.com/facebook/jest/issues/7136
-    notificationHandler1 = jest.fn((notification: CoreNotification) => {})
-    notificationHandler2 = jest.fn((notification: CoreNotification) => {})
+    notificationHandler1 = jest.fn((notification: CoreNotification) => { })
+    notificationHandler2 = jest.fn((notification: CoreNotification) => { })
 
     requestHandler1 = jest.fn(request => Promise.resolve({}))
     requestHandler2 = jest.fn(request => Promise.resolve({}))
@@ -108,24 +108,21 @@ describe("notification events", () => {
     })
 
     test("listen for all notifications", async () => {
-        // define notificationHandler1 for both methods so that no error message gets thrown
-        // otherwise we get the error message
         events.listenForNotifications(channel, method, notificationHandler1)
         events.listenForNotifications(channel, otherMethod, notificationHandler1)
         events.listenForAllNotifications(notificationHandler2)
+
         events.notify(notification)
         expect(notificationHandler2.mock.calls.length).toBe(1)
-        events.notify({ channel, method: otherMethod })
 
+        events.notify({ channel, method: otherMethod })
         expect(notificationHandler2.mock.calls.length).toBe(2)
     })
 
-    test("undefined-notification-handler notification recieved by all-notification handler", async () => {
-        // If no notification handler is defined, the "catch-all" notification-handler
-        // still picks up the sent notification with no defined target notification listener
+    test("when a listener for all notifications is registered, no undefined-notification-error is thrown", async () => {
         events.listenForAllNotifications(notificationHandler1)
         events.notify(notification)
-        expect(notificationHandler1.mock.calls.length).toBe(2)
+        expect(notificationHandler1.mock.calls.length).toBe(1)
     })
 })
 
@@ -203,7 +200,7 @@ describe("middleware", () => {
         events.addMiddleware(rejectingMiddleware)
         events.listenForRequests(channel, method, requestHandler1)
 
-        await events.request(request).catch(() => {})
+        await events.request(request).catch(() => { })
 
         expect(requestHandler1).not.toHaveBeenCalled()
         expect(rejectingMiddleware).toHaveBeenCalled()
@@ -213,7 +210,7 @@ describe("middleware", () => {
         events.addMiddleware(resolvingMiddleware)
         events.listenForRequests(channel, method, requestHandler1)
 
-        await events.request(request).catch(() => {})
+        await events.request(request).catch(() => { })
 
         expect(requestHandler1).not.toHaveBeenCalled()
         expect(resolvingMiddleware).toHaveBeenCalled()
