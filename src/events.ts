@@ -108,17 +108,28 @@ class NotificationHandler {
     }
 }
 
+// this should be replaced with logging plugin
+class Logger {
+    constructor(private debugging: boolean = false) {}
+
+    public log(...args: any[]) {
+        if (this.debugging) {
+            console.log(...args)
+        }
+    }
+}
+
 export class EventSystem {
     private requestHandler: RequestHandler
     private notificationHandler: NotificationHandler
     private middlewares: Middleware[]
-    private debugging: boolean
+    private logger: Logger
 
     constructor(debugging: boolean = false) {
         this.requestHandler = new RequestHandler(this)
         this.notificationHandler = new NotificationHandler(this)
         this.middlewares = []
-        this.debugging = debugging
+        this.logger = new Logger(debugging)
     }
 
     public listenForNotifications(
@@ -127,26 +138,26 @@ export class EventSystem {
         handler: NotificationHandlerFunc
     ) {
         this.notificationHandler.add(channel, method, handler)
-        this.log("added notification listener for", channel)
+        this.logger.log("added notification listener for", channel)
     }
 
     public listenForAllNotifications(handler: NotificationHandlerFunc) {
         this.notificationHandler.addGeneric(handler)
-        this.log("added notification listener for all channels")
+        this.logger.log("added notification listener for all channels")
     }
 
     public listenForRequests(channel: string, method: string, handler: RequestHandlerFunc) {
         this.requestHandler.add(channel, method, handler)
-        this.log("added request listener for", channel, method)
+        this.logger.log("added request listener for", channel, method)
     }
 
     public addMiddleware(middleware: Middleware) {
         this.middlewares.push(middleware)
-        this.log("middleware added")
+        this.logger.log("middleware added")
     }
 
     public async request(request: CoreRequest): Promise<CoreResponse> {
-        this.log("request", request)
+        this.logger.log("request", request)
         let { type, payload } = await this.handleMiddleware(request)
 
         if (type === MiddlewareResponseType.Resolve) {
@@ -159,18 +170,12 @@ export class EventSystem {
     }
 
     public notify(notification: CoreNotification) {
-        this.log("notification", notification)
+        this.logger.log("notification", notification)
 
         let { channel, method } = notification
 
         for (let subscriber of this.notificationHandler.get(channel, method)) {
             subscriber(notification)
-        }
-    }
-
-    private log(...args: any[]) {
-        if (this.debugging) {
-            console.log(...args)
         }
     }
 
