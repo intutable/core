@@ -1,5 +1,5 @@
 import { NotificationHandler } from ".."
-import { EventSystem, RequestHandler } from "../events"
+import { EventSystem, RequestHandlerFunc } from "../events"
 
 export class PluginLoader {
     events: EventSystem
@@ -24,7 +24,7 @@ export class PluginLoader {
         // This is necessary for chaining:
         // listenForRequests(...).on(...).on(...)
         const methodRegisterInterface = {
-            on: (method: string, handler: RequestHandler) => {
+            on: (method: string, handler: RequestHandlerFunc) => {
                 this.events.listenForRequests(channel, method, handler)
                 return methodRegisterInterface
             },

@@ -7,27 +7,69 @@ interface Message {
     [index: string]: any
 }
 
-export interface CoreRequest extends Message { }
+export interface CoreRequest extends Message {}
 
-export interface CoreNotification extends Message { }
+export interface CoreNotification extends Message {}
 
 export type CoreResponse = object
 
-export type RequestHandler = (request: CoreRequest) => Promise<CoreResponse>
+export type RequestHandlerFunc = (request: CoreRequest) => Promise<CoreResponse>
 export type NotificationHandler = (notification: CoreNotification) => void
+
+type RequestHandlerLookup = {
+    [index: string]: {
+        [index: string]: RequestHandlerFunc
+    }
+}
+
+class RequestHandler {
+    private handlers: RequestHandlerLookup
+
+    constructor(private events: EventSystem) {
+        this.handlers = {}
+    }
+
+    public add(channel: string, method: string, handler: RequestHandlerFunc) {
+        if (!this.handlers[channel]) {
+            this.handlers[channel] = {}
+        }
+
+        if (this.handlers[channel][method]) {
+            this.events.notify({
+                channel: "core",
+                method: "handler-overwrite",
+                message: `overwriting request handler for method ${method} in channel ${channel}`,
+            })
+        }
+
+        this.handlers[channel][method] = handler
+    }
+
+    public get(channel: string, method: string): RequestHandlerFunc {
+        if (!this.handlers[channel]) {
+            throw new Error(`no such channel ${channel}`)
+        }
+
+        if (!this.handlers[channel][method]) {
+            throw new Error(`no such method ${method}`)
+        }
+
+        return this.handlers[channel][method]
+    }
+}
 
 export class EventSystem {
     private notificationHandlers: { [index: string]: { [index: string]: NotificationHandler[] } }
     private notificationHandlersAll: NotificationHandler[]
 
-    private requestHandlers: { [index: string]: { [index: string]: RequestHandler } }
+    private requestHandler: RequestHandler
     private middlewares: Middleware[]
     private debugging: boolean
 
     constructor(debugging: boolean = false) {
         this.notificationHandlers = {}
         this.notificationHandlersAll = []
-        this.requestHandlers = {}
+        this.requestHandler = new RequestHandler(this)
         this.middlewares = []
         this.debugging = debugging
     }
@@ -52,21 +94,8 @@ export class EventSystem {
         this.log("added notification listener for all channels")
     }
 
-    public listenForRequests(channel: string, method: string, handler: RequestHandler) {
-        if (!this.requestHandlers[channel]) {
-            this.requestHandlers[channel] = {}
-        }
-
-        if (this.requestHandlers[channel][method]) {
-            this.notify({
-                channel: "core",
-                method: "handler-overwrite",
-                message: `overwriting request handler for method ${method} in channel ${channel}`,
-            })
-        }
-
-        this.requestHandlers[channel][method] = handler
-
+    public listenForRequests(channel: string, method: string, handler: RequestHandlerFunc) {
+        this.requestHandler.add(channel, method, handler)
         this.log("added request listener for", channel, method)
     }
 
@@ -157,14 +186,7 @@ export class EventSystem {
         method,
         ...request
     }: CoreRequest): Promise<CoreResponse> {
-        if (!this.requestHandlers[channel]) {
-            return Promise.reject({ message: `no such channel ${channel}` })
-        }
-
-        if (!this.requestHandlers[channel][method]) {
-            return Promise.reject({ message: `no such method ${method}` })
-        }
-
-        return this.requestHandlers[channel][method]({ channel, method, ...request })
+        const handler = this.requestHandler.get(channel, method)
+        return handler({ channel, method, ...request })
     }
 }
