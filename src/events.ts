@@ -7,9 +7,9 @@ interface Message {
     [index: string]: any
 }
 
-export interface CoreRequest extends Message {}
+export interface CoreRequest extends Message { }
 
-export interface CoreNotification extends Message {}
+export interface CoreNotification extends Message { }
 
 export type CoreResponse = object
 
@@ -18,12 +18,15 @@ export type NotificationHandler = (notification: CoreNotification) => void
 
 export class EventSystem {
     private notificationHandlers: { [index: string]: { [index: string]: NotificationHandler[] } }
+    private notificationHandlersAll: NotificationHandler[]
+
     private requestHandlers: { [index: string]: { [index: string]: RequestHandler } }
     private middlewares: Middleware[]
     private debugging: boolean
 
     constructor(debugging: boolean = false) {
         this.notificationHandlers = {}
+        this.notificationHandlersAll = []
         this.requestHandlers = {}
         this.middlewares = []
         this.debugging = debugging
@@ -41,6 +44,12 @@ export class EventSystem {
         this.notificationHandlers[channel][method].push(handler)
 
         this.log("added notification listener for", channel)
+    }
+
+    public listenForAllNotifications(handler: NotificationHandler) {
+        this.notificationHandlersAll.push(handler)
+
+        this.log("added notification listener for all channels")
     }
 
     public listenForRequests(channel: string, method: string, handler: RequestHandler) {
@@ -84,7 +93,10 @@ export class EventSystem {
 
         let { channel, method } = notification
 
-        if (!this.notificationHandlers[channel] || !this.notificationHandlers[channel][method]) {
+        if (
+            !this.hasNotificationHandler(channel, method) &&
+            !this.hasGenericNotificationHandler()
+        ) {
             if (method !== "undefinded-notification-handler") {
                 this.notify({
                     channel: "core",
@@ -97,9 +109,25 @@ export class EventSystem {
             return
         }
 
-        for (let subscriber of this.notificationHandlers[channel][method]) {
+        for (let subscriber of this.getNotificationHandlers(channel, method)) {
             subscriber(notification)
         }
+    }
+
+    private getNotificationHandlers(channel: string, method: string): NotificationHandler[] {
+        if (this.hasNotificationHandler(channel, method)) {
+            return this.notificationHandlers[channel][method].concat(this.notificationHandlersAll)
+        } else {
+            return this.notificationHandlersAll
+        }
+    }
+
+    private hasGenericNotificationHandler() {
+        return this.notificationHandlersAll.length != 0
+    }
+
+    private hasNotificationHandler(channel: string, method: string) {
+        return this.notificationHandlers[channel] && this.notificationHandlers[channel][method]
     }
 
     private log(...args: any[]) {

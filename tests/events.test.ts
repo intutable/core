@@ -24,8 +24,8 @@ beforeEach(async () => {
     //needs to be reset every time
     // don't use any of the reset functions for this
     // it does not work https://github.com/facebook/jest/issues/7136
-    notificationHandler1 = jest.fn((notification: CoreNotification) => {})
-    notificationHandler2 = jest.fn((notification: CoreNotification) => {})
+    notificationHandler1 = jest.fn((notification: CoreNotification) => { })
+    notificationHandler2 = jest.fn((notification: CoreNotification) => { })
 
     requestHandler1 = jest.fn(request => Promise.resolve({}))
     requestHandler2 = jest.fn(request => Promise.resolve({}))
@@ -106,6 +106,24 @@ describe("notification events", () => {
         expect(notificationHandler1).toHaveBeenCalled()
         expect(notificationHandler2).toHaveBeenCalled()
     })
+
+    test("listen for all notifications", async () => {
+        events.listenForNotifications(channel, method, notificationHandler1)
+        events.listenForNotifications(channel, otherMethod, notificationHandler1)
+        events.listenForAllNotifications(notificationHandler2)
+
+        events.notify(notification)
+        expect(notificationHandler2.mock.calls.length).toBe(1)
+
+        events.notify({ channel, method: otherMethod })
+        expect(notificationHandler2.mock.calls.length).toBe(2)
+    })
+
+    test("when a listener for all notifications is registered, no undefined-notification-error is thrown", async () => {
+        events.listenForAllNotifications(notificationHandler1)
+        events.notify(notification)
+        expect(notificationHandler1.mock.calls.length).toBe(1)
+    })
 })
 
 describe("requests and responds via the event bus", () => {
@@ -182,7 +200,7 @@ describe("middleware", () => {
         events.addMiddleware(rejectingMiddleware)
         events.listenForRequests(channel, method, requestHandler1)
 
-        await events.request(request).catch(() => {})
+        await events.request(request).catch(() => { })
 
         expect(requestHandler1).not.toHaveBeenCalled()
         expect(rejectingMiddleware).toHaveBeenCalled()
@@ -192,7 +210,7 @@ describe("middleware", () => {
         events.addMiddleware(resolvingMiddleware)
         events.listenForRequests(channel, method, requestHandler1)
 
-        await events.request(request).catch(() => {})
+        await events.request(request).catch(() => { })
 
         expect(requestHandler1).not.toHaveBeenCalled()
         expect(resolvingMiddleware).toHaveBeenCalled()
