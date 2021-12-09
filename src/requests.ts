@@ -32,15 +32,14 @@ export class RequestHandler {
     }
 
     public get(channel: string, method: string): RequestHandlerFunc {
-        if (!this.handlers[channel]) {
-            throw new Error(`no such channel ${channel}`)
+        if (!this.hasHandler(channel, method)) {
+            throw new Error(`could not find request handler for ${channel}/${method}`)
         }
-
-        if (!this.handlers[channel][method]) {
-            throw new Error(`no such method ${method}`)
-        }
-
         return this.handlers[channel][method]
+    }
+
+    private hasHandler(channel: string, method: string): boolean {
+        return !!this.handlers[channel] && !!this.handlers[channel][method]
     }
 
     public handle(request: CoreRequest): Promise<CoreResponse> {

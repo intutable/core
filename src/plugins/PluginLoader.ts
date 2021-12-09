@@ -15,6 +15,7 @@ export class PluginLoader {
     constructor(events: EventSystem) {
         this.events = events
 
+        // delegate to EventSystem
         this.addMiddleware = events.addMiddleware.bind(events)
         this.notify = events.notify.bind(events)
         this.request = events.request.bind(events)

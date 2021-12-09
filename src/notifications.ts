@@ -62,10 +62,6 @@ export class NotificationHandler {
         }
     }
 
-    private hasGenericNotificationHandler() {
-        return this.genericHandlers.length != 0
-    }
-
     private hasNotificationHandler(channel: string, method: string) {
         return this.handlers[channel] && this.handlers[channel][method]
     }
