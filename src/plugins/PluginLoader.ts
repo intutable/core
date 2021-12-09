@@ -1,5 +1,6 @@
-import { NotificationHandlerFunc } from ".."
-import { EventSystem, RequestHandlerFunc } from "../events"
+import { EventSystem } from "../events"
+import { NotificationHandlerFunc } from "../notifications"
+import { RequestHandlerFunc } from "../requests"
 
 export class PluginLoader {
     events: EventSystem

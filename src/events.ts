@@ -1,7 +1,9 @@
 import { MiddlewareHandler, MiddlewareResponseType } from "./middleware"
-import { NotificationHandler } from "./notifications"
+import { CoreNotification, NotificationHandler } from "./notifications"
 import { CoreRequest, CoreResponse, RequestHandler } from "./requests"
 import { Logger } from "./utils"
+
+export { CoreRequest, CoreResponse, CoreNotification }
 
 export interface Message {
     channel: string
