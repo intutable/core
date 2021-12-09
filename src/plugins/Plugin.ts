@@ -4,11 +4,12 @@ export interface PluginModule {
 }
 
 export interface PluginInfo {
+    path: string
     name: string
+    dependencies?: object
 }
 
 export interface Plugin {
     module: PluginModule
     info: PluginInfo
-    path: string
 }

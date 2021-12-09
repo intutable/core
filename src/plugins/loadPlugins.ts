@@ -19,20 +19,61 @@ export async function loadPlugins(patterns: string[], events: EventSystem): Prom
         glob.sync(pattern, { cwd: joinPath(__dirname, "../.."), absolute: true })
     )
 
-    for (const pluginFolder of pluginFolders) {
-        await loadPlugin(pluginFolder, pluginLoader)
+    let pluginInfos = await loadPluginInfos(pluginFolders, events).then(infos =>
+        sortByDependencies(infos)
+    )
+
+    for (const pluginInfo of pluginInfos) {
+        await loadPlugin(pluginInfo, pluginLoader)
             .then(plugin => plugins.push(plugin))
-            .catch(err => {
-                onPluginLoadError(events, pluginFolder, err)
-            })
+            .catch(err => onPluginLoadError(events, pluginInfo, err))
     }
 
     return new PluginHandle(plugins)
 }
 
+async function loadPluginInfos(pluginPaths: string[], events: EventSystem): Promise<PluginInfo[]> {
+    let results: PluginInfo[] = []
+
+    for (const path of pluginPaths) {
+        const packageJson = joinPath(path, "package.json")
+
+        await readFile(packageJson)
+            .then(content => content.toString())
+            .then(JSON.parse)
+            .then(packageJson => ({
+                name: packageJson.name,
+                dependencies: packageJson.dependencies,
+                path,
+            }))
+            .then(info => results.push(info))
+            .catch(err => {
+                onPluginLoadError(events, { path } as PluginInfo, err)
+            })
+    }
+
+    return results
+}
+
+function sortByDependencies(pluginInfos: PluginInfo[]): PluginInfo[] {
+    return pluginInfos.sort((a, b) => {
+        if (!b.dependencies) {
+            return 1
+        }
+
+        if (a.name in b.dependencies) {
+            return -1 // a depends on b, put b first
+        } else {
+            // keep the order as is, either b depends on a
+            // or they dont depend on each other
+            return 1
+        }
+    })
+}
+
 function onPluginLoadError(
     events: EventSystem,
-    pluginPath: string,
+    pluginInfo: PluginInfo,
     err: { code: string; message: string }
 ) {
     switch (err.code) {
@@ -43,7 +84,7 @@ function onPluginLoadError(
             events.notify({
                 channel: "core",
                 method: "plugin-load-error",
-                message: `the folder ${pluginPath} does not contain a correct package.json and is ignored`,
+                message: `the folder ${pluginInfo.path} does not contain a correct package.json and is ignored`,
             })
             break
         default:
@@ -51,24 +92,18 @@ function onPluginLoadError(
                 channel: "core-plugin",
                 method: "plugin-load-error",
                 ...err,
-                message: `an unexpected error occured while trying to load the plugin at ${pluginPath}: ${err.message}`,
+                message: `an unexpected error occured while trying to load the plugin at ${pluginInfo.path}: ${err.message}`,
             })
     }
 }
 
-async function loadPlugin(pluginFolderPath: string, pluginLoader: PluginLoader): Promise<Plugin> {
-    const packageJson = joinPath(pluginFolderPath, "package.json")
+async function loadPlugin(pluginInfo: PluginInfo, pluginLoader: PluginLoader): Promise<Plugin> {
+    const module = await initializePlugin(pluginInfo.path, pluginLoader)
 
-    return readFile(packageJson)
-        .then(content => content.toString())
-        .then(JSON.parse)
-        .then(async (content: any) => ({
-            info: {
-                name: content.name,
-            },
-            module: await initializePlugin(pluginFolderPath, pluginLoader),
-        }))
-        .then(pluginInfo => ({ ...pluginInfo, path: pluginFolderPath }))
+    return {
+        info: pluginInfo,
+        module,
+    }
 }
 
 function initializePlugin(pluginPath: string, pluginLoader: PluginLoader): Promise<PluginModule> {
