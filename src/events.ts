@@ -26,24 +26,23 @@ export class EventSystem {
     public listenForNotifications: NotificationHandler["add"]
     public listenForAllNotifications: NotificationHandler["addGeneric"]
 
-    private middlewares: Middleware[]
+    private middlewares: MiddlewareHandler
+    public addMiddleware: MiddlewareHandler["add"]
 
     constructor(debugging: boolean = false) {
         this.logger = new Logger(debugging)
         this.requestHandler = new RequestHandler(this, this.logger)
         this.notificationHandler = new NotificationHandler(this, this.logger)
-        this.middlewares = []
+        this.middlewares = new MiddlewareHandler(this, this.logger)
 
+        // delegate to handlers
         this.listenForNotifications = this.notificationHandler.add.bind(this.notificationHandler)
         this.listenForAllNotifications = this.notificationHandler.addGeneric.bind(
             this.notificationHandler
         )
         this.listenForRequests = this.requestHandler.add.bind(this.requestHandler)
-    }
 
-    public addMiddleware(middleware: Middleware) {
-        this.middlewares.push(middleware)
-        this.logger.log("middleware added")
+        this.addMiddleware = this.middlewares.add.bind(this.middlewares)
     }
 
     public async request(request: CoreRequest): Promise<CoreResponse> {
@@ -70,7 +69,7 @@ export class EventSystem {
     }
 
     private async handleMiddleware(request: CoreRequest): Promise<MiddlewareResponse> {
-        for (let middleWare of this.middlewares) {
+        for (let middleWare of this.middlewares.get()) {
             let response = await middleWare(request)
 
             if (response.type !== MiddlewareResponseType.Pass) {
@@ -189,6 +188,23 @@ class NotificationHandler {
 
     private hasNotificationHandler(channel: string, method: string) {
         return this.handlers[channel] && this.handlers[channel][method]
+    }
+}
+
+class MiddlewareHandler {
+    private middlewares: Middleware[]
+
+    constructor(private events: EventSystem, private logger: Logger) {
+        this.middlewares = []
+    }
+
+    public get(): Middleware[] {
+        return this.middlewares
+    }
+
+    public add(middleWare: Middleware) {
+        this.middlewares.push(middleWare)
+        this.logger.log("middleware added")
     }
 }
 
