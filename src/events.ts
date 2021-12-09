@@ -11,7 +11,7 @@ export interface CoreRequest extends Message {}
 
 export interface CoreNotification extends Message {}
 
-export type CoreResponse = object
+export type CoreResponse = any
 
 export type RequestHandlerFunc = (request: CoreRequest) => Promise<CoreResponse>
 export type NotificationHandlerFunc = (notification: CoreNotification) => void
