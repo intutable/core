@@ -25,72 +25,40 @@ export class EventSystem {
     private notificationHandler: NotificationHandler
     public listenForNotifications: NotificationHandler["add"]
     public listenForAllNotifications: NotificationHandler["addGeneric"]
+    public notify: NotificationHandler["handle"]
 
-    private middlewares: MiddlewareHandler
+    private middlewareHandler: MiddlewareHandler
     public addMiddleware: MiddlewareHandler["add"]
 
     constructor(debugging: boolean = false) {
         this.logger = new Logger(debugging)
         this.requestHandler = new RequestHandler(this, this.logger)
         this.notificationHandler = new NotificationHandler(this, this.logger)
-        this.middlewares = new MiddlewareHandler(this, this.logger)
+        this.middlewareHandler = new MiddlewareHandler(this, this.logger)
 
         // delegate to handlers
         this.listenForNotifications = this.notificationHandler.add.bind(this.notificationHandler)
         this.listenForAllNotifications = this.notificationHandler.addGeneric.bind(
             this.notificationHandler
         )
+        this.notify = this.notificationHandler.handle.bind(this.notificationHandler)
+
         this.listenForRequests = this.requestHandler.add.bind(this.requestHandler)
 
-        this.addMiddleware = this.middlewares.add.bind(this.middlewares)
+        this.addMiddleware = this.middlewareHandler.add.bind(this.middlewareHandler)
     }
 
     public async request(request: CoreRequest): Promise<CoreResponse> {
         this.logger.log("request", request)
-        let { type, payload } = await this.handleMiddleware(request)
+        let { type, payload } = await this.middlewareHandler.handle(request)
 
         if (type === MiddlewareResponseType.Resolve) {
             return Promise.resolve(payload)
         } else if (type === MiddlewareResponseType.Reject) {
             return Promise.reject(payload)
         } else {
-            return this.handleRequest(payload)
+            return this.requestHandler.handle(payload)
         }
-    }
-
-    public notify(notification: CoreNotification) {
-        this.logger.log("notification", notification)
-
-        let { channel, method } = notification
-
-        for (let subscriber of this.notificationHandler.get(channel, method)) {
-            subscriber(notification)
-        }
-    }
-
-    private async handleMiddleware(request: CoreRequest): Promise<MiddlewareResponse> {
-        for (let middleWare of this.middlewares.get()) {
-            let response = await middleWare(request)
-
-            if (response.type !== MiddlewareResponseType.Pass) {
-                return Promise.resolve(response)
-            }
-
-            if (response.payload) {
-                request = response.payload
-            }
-        }
-
-        return Promise.resolve({ type: MiddlewareResponseType.Pass, payload: request })
-    }
-
-    private async handleRequest({
-        channel,
-        method,
-        ...request
-    }: CoreRequest): Promise<CoreResponse> {
-        const handler = this.requestHandler.get(channel, method)
-        return handler({ channel, method, ...request })
     }
 }
 
@@ -130,6 +98,10 @@ class RequestHandler {
 
         return this.handlers[channel][method]
     }
+
+    public handle(request: CoreRequest): Promise<CoreResponse> {
+        return this.get(request.channel, request.method)(request)
+    }
 }
 
 class NotificationHandler {
@@ -139,6 +111,14 @@ class NotificationHandler {
     constructor(private events: EventSystem, private logger: Logger) {
         this.handlers = {}
         this.genericHandlers = []
+    }
+
+    public handle(notification: CoreNotification) {
+        this.logger.log("notification", notification)
+
+        for (let subscriber of this.get(notification.channel, notification.method)) {
+            subscriber(notification)
+        }
     }
 
     public add(channel: string, method: string, handler: NotificationHandlerFunc) {
@@ -205,6 +185,24 @@ class MiddlewareHandler {
     public add(middleWare: Middleware) {
         this.middlewares.push(middleWare)
         this.logger.log("middleware added")
+    }
+
+    public async handle(request: CoreRequest): Promise<MiddlewareResponse> {
+        for (let middleware of this.middlewares) {
+            let response = await middleware(request)
+
+            // if it's not pass it is either resolved or rejected
+            if (response.type !== MiddlewareResponseType.Pass) {
+                return response
+            }
+
+            // if the middleware changed the request
+            if (response.payload) {
+                request = response.payload
+            }
+        }
+
+        return { type: MiddlewareResponseType.Pass, payload: request }
     }
 }
 
