@@ -6,8 +6,8 @@
     "types": "dist/index.d.ts",
     "scripts": {
         "build": "tsc",
-        "test": "jest --coverage tests",
-        "test:full": "npm test",
+        "test": "jest tests",
+        "test:coverage": "jest --coverage tests",
         "format": "npx prettier --write .",
         "prepare": "husky install"
     },

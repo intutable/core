@@ -1,5 +1,6 @@
-import { NotificationHandler } from ".."
-import { EventSystem, RequestHandler } from "../events"
+import { EventSystem } from "../events"
+import { NotificationHandlerFunc } from "../notifications"
+import { RequestHandlerFunc } from "../requests"
 
 export class PluginLoader {
     events: EventSystem
@@ -14,6 +15,7 @@ export class PluginLoader {
     constructor(events: EventSystem) {
         this.events = events
 
+        // delegate to EventSystem
         this.addMiddleware = events.addMiddleware.bind(events)
         this.notify = events.notify.bind(events)
         this.request = events.request.bind(events)
@@ -24,7 +26,7 @@ export class PluginLoader {
         // This is necessary for chaining:
         // listenForRequests(...).on(...).on(...)
         const methodRegisterInterface = {
-            on: (method: string, handler: RequestHandler) => {
+            on: (method: string, handler: RequestHandlerFunc) => {
                 this.events.listenForRequests(channel, method, handler)
                 return methodRegisterInterface
             },
@@ -36,7 +38,7 @@ export class PluginLoader {
         const methodRegisterInterface = {
             // This is necessary for chaining:
             // listenForRequests(...).on(...).on(...)
-            on: (method: string, handler: NotificationHandler) => {
+            on: (method: string, handler: NotificationHandlerFunc) => {
                 this.events.listenForNotifications(channel, method, handler)
                 return methodRegisterInterface
             },

@@ -11,7 +11,7 @@ before_script:
 test:
     stage: test
     script:
-        - npm run test:full
+        - npm run test:coverage
     coverage: /All files[^|]*\|[^|]*\s+([\d\.]+)/
 
 build:
