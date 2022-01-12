@@ -106,18 +106,18 @@ async function loadPlugin(pluginInfo: PluginInfo, pluginLoader: PluginLoader): P
     }
 }
 
-function initializePlugin(pluginPath: string, pluginLoader: PluginLoader): Promise<PluginModule> {
-    return new Promise((resolve, reject) => {
-        const module = require(pluginPath)
-
-        if (!module.init) {
-            reject({
-                code: "NO_INIT",
-                message: `the module at ${pluginPath} has no init function`,
-            })
-        }
-
-        module.init(pluginLoader)
-        resolve(module)
-    })
+async function initializePlugin(
+    pluginPath: string,
+    pluginLoader: PluginLoader
+): Promise<PluginModule> {
+    const module = require(pluginPath)
+    if (!module.init) {
+        return Promise.reject({
+            code: "NO_INIT",
+            message: `the module at ${pluginPath} has no init function`,
+        })
+    } else {
+        await module.init(pluginLoader)
+        return module
+    }
 }
