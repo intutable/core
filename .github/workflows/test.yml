@@ -19,6 +19,8 @@ jobs:
 
             - name: Install dependencies
               run: npm install
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Test
               run: npm run test:coverage
