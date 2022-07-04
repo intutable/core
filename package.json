@@ -1,6 +1,6 @@
 {
     "name": "@intutable/core",
-    "version": "0.1.6",
+    "version": "1.0.0",
     "description": "The core for the intutable project",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -13,14 +13,14 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://gitlab.com/intutable/core/"
+        "url": "https://github.com/intutable/core.git"
     },
     "author": "Parallel and Distributed Systems Group Universität Heidelberg",
     "license": "Apache-2.0",
     "bugs": {
-        "url": "https://gitlab.com/intutable/core/issues"
+        "url": "https://github.com/intutable/core/issues"
     },
-    "homepage": "https://gitlab.com/intutable/core#readme",
+    "homepage": "https://github.com/intutable/core#readme",
     "files": [
         "package.json",
         "LICENSE",
@@ -38,10 +38,9 @@
         "husky": "^7.0.0"
     },
     "dependencies": {
-        "@intutable/database": "^1.0.3",
         "glob": "^7.2.0"
     },
     "publishConfig": {
-        "@intutable:registry": "https://gitlab.com/api/v4/projects/29926955/packages/npm/"
+        "registry": "https://npm.pkg.github.com"
     }
 }
