@@ -24,8 +24,8 @@ beforeEach(async () => {
     //needs to be reset every time
     // don't use any of the reset functions for this
     // it does not work https://github.com/facebook/jest/issues/7136
-    notificationHandler1 = jest.fn((notification: CoreNotification) => { })
-    notificationHandler2 = jest.fn((notification: CoreNotification) => { })
+    notificationHandler1 = jest.fn((notification: CoreNotification) => {})
+    notificationHandler2 = jest.fn((notification: CoreNotification) => {})
 
     requestHandler1 = jest.fn(request => Promise.resolve({}))
     requestHandler2 = jest.fn(request => Promise.resolve({}))
@@ -200,7 +200,7 @@ describe("middleware", () => {
         events.addMiddleware(rejectingMiddleware)
         events.listenForRequests(channel, method, requestHandler1)
 
-        await events.request(request).catch(() => { })
+        await events.request(request).catch(() => {})
 
         expect(requestHandler1).not.toHaveBeenCalled()
         expect(rejectingMiddleware).toHaveBeenCalled()
@@ -210,7 +210,7 @@ describe("middleware", () => {
         events.addMiddleware(resolvingMiddleware)
         events.listenForRequests(channel, method, requestHandler1)
 
-        await events.request(request).catch(() => { })
+        await events.request(request).catch(() => {})
 
         expect(requestHandler1).not.toHaveBeenCalled()
         expect(resolvingMiddleware).toHaveBeenCalled()
