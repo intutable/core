@@ -13,7 +13,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/intutable/core"
+        "url": "https://github.com/intutable/core.git"
     },
     "author": "Parallel and Distributed Systems Group Universität Heidelberg",
     "license": "Apache-2.0",
@@ -41,6 +41,6 @@
         "glob": "^7.2.0"
     },
     "publishConfig": {
-        "@intutable:registry": "https://gitlab.com/api/v4/projects/29926955/packages/npm/"
+        "registry": "https://npm.pkg.github.com"
     }
 }
