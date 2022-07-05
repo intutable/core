@@ -22,8 +22,7 @@ jobs:
               with:
                   node-version: 14
             - run: npm ci
-            - run: |
-                  echo '//npm.pkg.github.com/:_authToken=${NPM_TOKEN}' >> .npmrc
+            - run: npm run build
             - run: npm publish
               env:
                   NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
