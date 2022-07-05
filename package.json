@@ -41,6 +41,6 @@
         "glob": "^7.2.0"
     },
     "publishConfig": {
-        "registry": "https://npm.pkg.github.com"
+        "registry": "https://npm.pkg.github.com/@intutable"
     }
 }
